@@ -2,11 +2,10 @@ package archivar
 
 import (
 	"context"
-	"os"
 	"time"
 
-	"github.com/rwese/archivar/archivar/archiver/webdav"
-	"github.com/rwese/archivar/archivar/gatherer/imap"
+	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/gatherer"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,55 +13,46 @@ const POLLING_INTERVAL = 60
 
 type Service struct {
 	logger *logrus.Logger
+	jobs   []ArchiveJob
 }
 
-func New() Service {
-	logger := logrus.New()
+type ArchiveJob struct {
+	gatherer gatherer.Gatherer
+	archiver archiver.Archiver
+}
 
-	logDebugging := os.Getenv("LOG.DEBUGGING")
-	logger.SetLevel(logrus.InfoLevel)
-
-	if logDebugging == "1" {
-		logger.SetLevel(logrus.DebugLevel)
-	}
-
+func New(logger *logrus.Logger) Service {
 	return Service{
 		logger: logger,
 	}
 }
-func (s *Service) Run(ctx context.Context) {
-	webdavUploader := webdav.New(os.Getenv("WEBDAV.URL"),
-		os.Getenv("WEBDAV.USERNAME"),
-		os.Getenv("WEBDAV.PASSWORD"),
-		os.Getenv("WEBDAV.UPLOAD.DIRECTORY"),
-		s.logger,
-	)
 
-	imapDownloader := imap.New(
-		os.Getenv("IMAP.SERVER"),
-		os.Getenv("IMAP.USERNAME"),
-		os.Getenv("IMAP.PASSWORD"),
-		os.Getenv("SETTINGS.KEEPUPLOADED") == "1",
-		webdavUploader,
-		s.logger,
-	)
+func (s *Service) AddJob(gatherer gatherer.Gatherer, archiver archiver.Archiver) {
+	s.jobs = append(s.jobs, ArchiveJob{gatherer, archiver})
+}
+
+func (s *Service) Run(ctx context.Context) {
+	schedule := time.After(1 * POLLING_INTERVAL)
 
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Println("Gracefully exit")
-			s.logger.Println(ctx.Err())
+			s.logger.Debugln("Gracefully exit")
+			s.logger.Debugln(ctx.Err())
 			return
-		default:
+		case <-schedule:
 			s.logger.Debugln("run...")
 
-			err := imapDownloader.Download()
-			if err != nil {
-				s.logger.Fatalf("error: %s", err.Error())
+			for _, job := range s.jobs {
+				err := job.gatherer.Download()
+				if err != nil {
+					s.logger.Fatalf("error: %s", err.Error())
+				}
 			}
 
-			time.Sleep(time.Second * POLLING_INTERVAL)
 		}
+
+		schedule = time.After(time.Second * POLLING_INTERVAL)
 	}
 
 }
