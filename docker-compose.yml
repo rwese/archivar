@@ -3,7 +3,4 @@ version: "3.6"
 services:
   app:
     image: the-little-archiver
-    build:
-      context: ./
-      dockerfile: docker/Dockerfile
     restart: "no"

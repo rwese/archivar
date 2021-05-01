@@ -5,7 +5,6 @@ import (
 
 	"github.com/rwese/archivar/archivar/archiver"
 	"github.com/rwese/archivar/archivar/gatherer/imap"
-	"github.com/rwese/archivar/archivar/gatherer/reddit"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,15 +30,6 @@ func New(g GathererConfig, archivar archiver.Archiver, logger *logrus.Logger) (g
 			g.Username,
 			g.Password,
 			g.KeepUploaded,
-			archivar,
-			logger,
-		)
-	case "reddit":
-		gatherer = reddit.New(
-			g.Username,
-			g.Password,
-			g.ClientId,
-			g.ClientSecret,
 			archivar,
 			logger,
 		)
