@@ -1,47 +1,62 @@
 package main
 
 import (
-	"context"
-	"os"
-	"os/signal"
+	"fmt"
 
 	"github.com/rwese/archivar/archivar"
-	"github.com/rwese/archivar/archivar/archiver/webdav"
-	"github.com/rwese/archivar/archivar/gatherer/imap"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	logger := logrus.New()
+	var configFile string
+	var debugging bool
+	var watchInterval int
+	var serviceConfig archivar.Config
+	var logger = logrus.New()
 
-	logDebugging := os.Getenv("LOG_DEBUGGING")
-	logger.SetLevel(logrus.InfoLevel)
-
-	if logDebugging == "1" {
-		logger.SetLevel(logrus.DebugLevel)
+	var cmdWatch = &cobra.Command{
+		Use:   "watch",
+		Short: "Start gathering and archiving until stopped",
+		Long: `Starts the monitoring process processing all gathers 
+and running the archivers until receiving an interrupt signal.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			s := archivar.New(serviceConfig, logger)
+			logger.Debugf("running watch with interval: %d", watchInterval)
+			s.Watch(watchInterval)
+		},
 	}
 
-	webdavUploader := webdav.New(
-		os.Getenv("WEBDAV_URL"),
-		os.Getenv("WEBDAV_USERNAME"),
-		os.Getenv("WEBDAV_PASSWORD"),
-		os.Getenv("WEBDAV_UPLOAD_DIRECTORY"),
-		logger,
-	)
+	cmdWatch.Flags().IntVarP(&watchInterval, "interval", "i", 60, "wait time between processing of all configured archivers")
 
-	imapDownloader := imap.New(
-		os.Getenv("IMAP_SERVER"),
-		os.Getenv("IMAP_USERNAME"),
-		os.Getenv("IMAP_PASSWORD"),
-		os.Getenv("SETTINGS_KEEPUPLOADED") == "1",
-		webdavUploader,
-		logger,
-	)
+	var rootCmd = &cobra.Command{
+		Use: "app",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if debugging {
+				logger.SetLevel(logrus.DebugLevel)
+			}
 
-	s := archivar.New(logger)
-	s.AddJob(imapDownloader, webdavUploader)
+			viper.SetConfigName(configFile) // name of config file (without extension)
+			viper.SetConfigType("yaml")
+			viper.AddConfigPath("/etc/go-archivar/")
+			err := viper.ReadInConfig()
+			if err != nil {
+				panic(fmt.Errorf("fatal error config file: %s", err))
+			}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-	s.Run(ctx)
+			err = viper.Unmarshal(&serviceConfig)
+			if err != nil { // Handle errors reading the config file
+				panic(fmt.Errorf("fatal error config file: %s", err))
+			}
+		},
+	}
+
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "archivar.yaml", "Configfile")
+	rootCmd.PersistentFlags().BoolVarP(&debugging, "debug", "d", false, "enable verbose logging output")
+	rootCmd.AddCommand(cmdWatch)
+	err := rootCmd.Execute()
+	if err != nil {
+		panic(err)
+	}
 }

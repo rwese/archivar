@@ -5,20 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "archivar watch",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/archivar/",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "args": ["-", "watch",
+                 "--debug", 
+                 "-i", "5",
+                 "--config", "../../archivar.yaml",
+                ]
         },
-        {
-            "name": "Launch Easybank Debug",
-            "type": "go",
-            "request": "launch",
-            "mode": "test",
-            "program": "${workspaceFolder}/kanedama/easybank/easybank.go",
-            "envFile": "${workspaceFolder}/.env"
-        }
     ]
 }

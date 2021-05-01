@@ -2,6 +2,8 @@ package archivar
 
 import (
 	"context"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/rwese/archivar/archivar/archiver"
@@ -9,50 +11,89 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const POLLING_INTERVAL = 60
-
 type Service struct {
-	logger *logrus.Logger
-	jobs   []ArchiveJob
+	logger          *logrus.Logger
+	pollingInterval time.Duration
+	jobs            []ArchivarJob
 }
 
-type ArchiveJob struct {
+type Config struct {
+	Settings struct {
+		Log struct {
+			Debugging bool
+		}
+	}
+	Archivers map[string]archiver.ArchiverConfig
+	Gatherers map[string]gatherer.GathererConfig
+	Jobs      map[string]Jobs
+}
+
+type Jobs struct {
+	Gatherer string
+	Archiver string
+}
+
+type ArchivarJob struct {
 	gatherer gatherer.Gatherer
 	archiver archiver.Archiver
 }
 
-func New(logger *logrus.Logger) Service {
-	return Service{
+func New(config Config, logger *logrus.Logger) Service {
+	s := Service{
 		logger: logger,
 	}
+
+	for _, job := range config.Jobs {
+		archiverConfig := config.Archivers[job.Archiver]
+		archiver, err := archiver.New(archiverConfig, s.logger)
+		if err != nil {
+			s.logger.Fatalln(err)
+		}
+
+		gathererConfig := config.Gatherers[job.Gatherer]
+		gatherer, err := gatherer.New(gathererConfig, archiver, s.logger)
+		if err != nil {
+			s.logger.Fatalln(err)
+		}
+
+		s.AddJob(gatherer, archiver)
+	}
+
+	return s
 }
 
 func (s *Service) AddJob(gatherer gatherer.Gatherer, archiver archiver.Archiver) {
-	s.jobs = append(s.jobs, ArchiveJob{gatherer, archiver})
+	s.jobs = append(s.jobs, ArchivarJob{gatherer, archiver})
 }
 
-func (s *Service) Run(ctx context.Context) {
-	schedule := time.After(1 * POLLING_INTERVAL)
+func (s *Service) run() {
+	for _, job := range s.jobs {
+		err := job.gatherer.Download()
+		if err != nil {
+			s.logger.Fatalf("error: %s", err.Error())
+		}
+	}
+}
+
+func (s *Service) Watch(pollingInterval int) {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	waitingTime := time.Duration(pollingInterval) * time.Second
+	schedule := time.After(time.Second * 0)
 
 	for {
 		select {
 		case <-ctx.Done():
 			s.logger.Debugln("Gracefully exit")
-			s.logger.Debugln(ctx.Err())
 			return
 		case <-schedule:
-			s.logger.Debugln("run...")
-
-			for _, job := range s.jobs {
-				err := job.gatherer.Download()
-				if err != nil {
-					s.logger.Fatalf("error: %s", err.Error())
-				}
-			}
-
+			s.run()
 		}
 
-		schedule = time.After(time.Second * POLLING_INTERVAL)
-	}
+		time.Sleep(time.Second * 1)
 
+		// time.After allows the process to be stopped instantly which sleep doesn't
+		schedule = time.After(waitingTime)
+	}
 }

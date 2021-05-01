@@ -18,6 +18,15 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
 
 ## TODO
 
+- Gatherers
+  - [x] IMAP
+  - [ ] POP3
+  - Reddit
+    - [ ] Saved Posts
+- Archivers
+  - [x] Webdav
+  - [ ] Dropbox
+  - [ ] Google Drive
 - [x] cleanup logging
   - [ ] properly apply log levels to output
 - [x] deamonize

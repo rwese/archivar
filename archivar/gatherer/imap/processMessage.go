@@ -56,6 +56,7 @@ func (i Imap) processMessage(msg *imap.Message) (err error) {
 	}
 	mailData := mailData{}
 	header := m.Header
+
 	if date, err := header.Date(); err == nil {
 		mailData.date = date
 	}
