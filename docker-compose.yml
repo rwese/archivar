@@ -2,5 +2,8 @@ version: "3.6"
 
 services:
   app:
-    image: the-little-archiver
-    restart: "no"
+    build:
+      context: ./
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./etc:/etc/go-archivar

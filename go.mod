@@ -11,5 +11,4 @@ require (
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/studio-b12/gowebdav v0.0.0-20210203212356-8244b5a5f51a
 	golang.org/x/sys v0.0.0-20201119102817-f84b799fce68 // indirect
-	google.golang.org/protobuf v1.26.0
 )

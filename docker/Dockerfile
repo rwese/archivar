@@ -29,4 +29,4 @@ COPY --from=builder /dist/app /
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Command to run
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/app", "watch"]

@@ -23,14 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Debug
-        run: ls
-      - name: Debug
-        run: ls docker
-
-      - name: Debug
-        run: pwd
-
       - name: Build and Publish latest Docker image
         uses: VaultVulp/gp-docker-action@1.1.8
         with:

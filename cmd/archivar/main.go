@@ -33,10 +33,6 @@ and running the archivers until receiving an interrupt signal.`,
 	var rootCmd = &cobra.Command{
 		Use: "app",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if debugging {
-				logger.SetLevel(logrus.DebugLevel)
-			}
-
 			viper.SetConfigName(configFile) // name of config file (without extension)
 			viper.SetConfigType("yaml")
 			viper.AddConfigPath(".")
@@ -49,6 +45,10 @@ and running the archivers until receiving an interrupt signal.`,
 			err = viper.Unmarshal(&serviceConfig)
 			if err != nil { // Handle errors reading the config file
 				panic(fmt.Errorf("fatal error config file: %s", err))
+			}
+
+			if debugging || serviceConfig.Settings.Log.Debugging {
+				logger.SetLevel(logrus.DebugLevel)
 			}
 		},
 	}
