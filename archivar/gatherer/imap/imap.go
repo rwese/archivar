@@ -21,10 +21,6 @@ type Imap struct {
 	logger       *logrus.Logger
 }
 
-func init() {
-	seenMessages = make(map[uint32]bool)
-}
-
 func New(server string, username string, password string, keepUploaded bool, storage archiver.Archiver, logger *logrus.Logger) (i *Imap) {
 	i = &Imap{
 		storage:      storage,
@@ -53,10 +49,9 @@ func (i *Imap) Connect() (c *client.Client, err error) {
 	if err = c.Login(i.username, i.password); err != nil {
 		i.logger.Fatalf("failed to login to imap: %s", err.Error())
 	}
+
 	return
 }
-
-var seenMessages map[uint32]bool
 
 func (i *Imap) Download() (err error) {
 	c, err := i.Connect()

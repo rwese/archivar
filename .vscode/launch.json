@@ -14,7 +14,7 @@
             "args": ["-", "watch",
                  "--debug", 
                  "-i", "5",
-                 "--config", "../../archivar.yaml",
+                 "--config", "../../etc/archivar.yaml",
                 ]
         },
     ]

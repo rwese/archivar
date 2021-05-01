@@ -39,6 +39,7 @@ and running the archivers until receiving an interrupt signal.`,
 
 			viper.SetConfigName(configFile) // name of config file (without extension)
 			viper.SetConfigType("yaml")
+			viper.AddConfigPath(".")
 			viper.AddConfigPath("/etc/go-archivar/")
 			err := viper.ReadInConfig()
 			if err != nil {

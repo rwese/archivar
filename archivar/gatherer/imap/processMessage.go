@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emersion/go-imap"
+	_ "github.com/emersion/go-message/charset"
 	"github.com/emersion/go-message/mail"
 	"github.com/sirupsen/logrus"
 )
@@ -50,6 +51,7 @@ func (m mailData) getFilePath() string {
 
 func (i Imap) processMessage(msg *imap.Message) (err error) {
 	r := msg.GetBody(i.section)
+
 	m, err := mail.CreateReader(r)
 	if err != nil {
 		log.Fatal(err)
