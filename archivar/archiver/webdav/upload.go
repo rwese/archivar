@@ -3,37 +3,16 @@ package webdav
 import (
 	"io"
 	"path"
-
-	"github.com/studio-b12/gowebdav"
 )
-
-var knownUploadDirectories map[string]bool
-
-func (w *Webdav) connect() (newSession bool, err error) {
-	if newSession = w.client == nil; !newSession {
-		return
-	}
-
-	w.client = gowebdav.NewClient(w.server, w.userName, w.userPassword)
-	w.logger.Debugf("connecting to %s as %s\n", w.server, w.userName)
-	err = w.client.Connect()
-	if err != nil {
-		w.logger.Fatalf("failed to connect: %s\n", err.Error())
-	}
-
-	return
-}
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
 func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
-
-	newSession, err := w.connect()
+	newSession, err := w.Connect()
 	if err != nil {
 		return
 	}
 
 	if newSession {
-		knownUploadDirectories = make(map[string]bool)
 		_, err = w.client.Stat(w.uploadDirectory)
 		if err != nil {
 			w.logger.Fatalf("failed to access upload directory: %s", err.Error())
@@ -42,7 +21,7 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 
 	uploadDirectory := path.Join(w.uploadDirectory, fileDirectory)
 
-	if !knownUploadDirectories[uploadDirectory] {
+	if !w.knownUploadDirectories[uploadDirectory] {
 		w.logger.Debugf("uploadDirectory will be: %s", uploadDirectory)
 		_, err = w.client.Stat(uploadDirectory)
 		if err != nil {
@@ -52,7 +31,7 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 				return
 			}
 		}
-		knownUploadDirectories[uploadDirectory] = true
+		w.knownUploadDirectories[uploadDirectory] = true
 	}
 
 	uploadFileName := path.Join(uploadDirectory, fileName)

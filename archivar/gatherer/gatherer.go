@@ -9,8 +9,10 @@ import (
 )
 
 type Gatherer interface {
+	Connect() (err error)
 	Download() (err error)
 }
+
 type GathererConfig struct {
 	Type         string
 	Server       string

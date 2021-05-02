@@ -17,6 +17,7 @@ type ArchiverConfig struct {
 }
 
 type Archiver interface {
+	Connect() (newSession bool, err error)
 	Upload(fileName string, directory string, fileHandle io.Reader) (err error)
 }
 

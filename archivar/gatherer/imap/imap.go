@@ -15,6 +15,7 @@ type Imap struct {
 	username     string
 	password     string
 	keepUploaded bool
+	client       *client.Client
 	inbox        string
 	section      *imap.BodySectionName
 	items        []imap.FetchItem
@@ -37,16 +38,16 @@ func New(server string, username string, password string, keepUploaded bool, sto
 	return i
 }
 
-func (i *Imap) Connect() (c *client.Client, err error) {
+func (i *Imap) Connect() (err error) {
 	tlsConfig := tls.Config{InsecureSkipVerify: true}
 	i.logger.Debugf("connecting to %s", i.server)
-	c, err = client.DialTLS(i.server, &tlsConfig)
+	i.client, err = client.DialTLS(i.server, &tlsConfig)
 	if err != nil {
 		i.logger.Fatalf("failed to connect to imap: %s", err.Error())
 	}
 
 	i.logger.Debugf("authenticate as %s using password %t", i.username, i.password != "")
-	if err = c.Login(i.username, i.password); err != nil {
+	if err = i.client.Login(i.username, i.password); err != nil {
 		i.logger.Fatalf("failed to login to imap: %s", err.Error())
 	}
 
@@ -54,9 +55,13 @@ func (i *Imap) Connect() (c *client.Client, err error) {
 }
 
 func (i *Imap) Download() (err error) {
-	c, err := i.Connect()
-	defer c.Logout()
-	mbox, err := c.Select(i.inbox, false)
+	err = i.Connect()
+	if err != nil {
+		return
+	}
+
+	defer i.client.Logout()
+	mbox, err := i.client.Select(i.inbox, false)
 	if err != nil {
 		i.logger.Fatal(err)
 	}
@@ -66,6 +71,7 @@ func (i *Imap) Download() (err error) {
 		i.logger.Debug("no messages")
 		return nil
 	}
+
 	i.logger.Debugf("found %d messages", mbox.Messages)
 	seqset := new(imap.SeqSet)
 	seqset.AddRange(uint32(1), mbox.Messages)
@@ -73,7 +79,7 @@ func (i *Imap) Download() (err error) {
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
-		done <- c.Fetch(seqset, i.items, messages)
+		done <- i.client.Fetch(seqset, i.items, messages)
 	}()
 
 	readMsgSeq := new(imap.SeqSet)
@@ -95,7 +101,7 @@ func (i *Imap) Download() (err error) {
 	if !i.keepUploaded {
 		i.logger.Debug("deleting processed messages")
 
-		if err = i.flagAndDeleteMessages(readMsgSeq, c); err != nil {
+		if err = i.flagAndDeleteMessages(readMsgSeq); err != nil {
 			i.logger.Fatalf("Failed to clean read messages: %s", err.Error())
 		}
 	}
@@ -104,14 +110,14 @@ func (i *Imap) Download() (err error) {
 	return
 }
 
-func (i Imap) flagAndDeleteMessages(readMsgSeq *imap.SeqSet, c *client.Client) (err error) {
+func (i Imap) flagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
 	item := imap.FormatFlagsOp(imap.AddFlags, true)
 	flags := []interface{}{imap.DeletedFlag}
-	if err := c.Store(readMsgSeq, item, flags, nil); err != nil {
+	if err := i.client.Store(readMsgSeq, item, flags, nil); err != nil {
 		return err
 	}
 
-	if err := c.Expunge(nil); err != nil {
+	if err := i.client.Expunge(nil); err != nil {
 		return err
 	}
 
