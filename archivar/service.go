@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	"github.com/rwese/archivar/archivar/archiver"
@@ -67,11 +68,20 @@ func (s *Service) AddJob(gatherer gatherer.Gatherer, archiver archiver.Archiver)
 }
 
 func (s *Service) run() {
+	wg := new(sync.WaitGroup)
+	wg.Add(len(s.jobs))
+
 	for _, job := range s.jobs {
-		err := job.gatherer.Download()
-		if err != nil {
-			s.logger.Fatalf("error: %s", err.Error())
-		}
+		go s.runJob(job)
+	}
+
+	wg.Wait()
+}
+
+func (s *Service) runJob(job ArchivarJob) {
+	err := job.gatherer.Download()
+	if err != nil {
+		s.logger.Fatalf("error: %s", err.Error())
 	}
 }
 
