@@ -79,11 +79,11 @@ func (s *Service) run() {
 }
 
 func (s *Service) runJob(job ArchivarJob, wg *sync.WaitGroup) {
+	defer wg.Done()
 	err := job.gatherer.Download()
 	if err != nil {
 		s.logger.Fatalf("error: %s", err.Error())
 	}
-	wg.Done()
 }
 
 func (s *Service) Watch(pollingInterval int) {
