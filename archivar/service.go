@@ -72,17 +72,18 @@ func (s *Service) run() {
 	wg.Add(len(s.jobs))
 
 	for _, job := range s.jobs {
-		go s.runJob(job)
+		go s.runJob(job, &wg)
 	}
 
 	wg.Wait()
 }
 
-func (s *Service) runJob(job ArchivarJob) {
+func (s *Service) runJob(job ArchivarJob, wg *sync.WaitGroup) {
 	err := job.gatherer.Download()
 	if err != nil {
 		s.logger.Fatalf("error: %s", err.Error())
 	}
+	wg.Done()
 }
 
 func (s *Service) Watch(pollingInterval int) {
