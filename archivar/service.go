@@ -72,7 +72,7 @@ func (s *Service) run() {
 	wg.Add(len(s.jobs))
 
 	for _, job := range s.jobs {
-		go s.runJob(job, &wg)
+		go s.runJob(job, wg)
 	}
 
 	wg.Wait()
