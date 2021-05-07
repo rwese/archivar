@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/rwese/archivar/archivar/archiver/google_drive"
 	"github.com/rwese/archivar/archivar/archiver/webdav"
 	"github.com/sirupsen/logrus"
 )
@@ -14,6 +15,8 @@ type ArchiverConfig struct {
 	Username        string
 	Password        string
 	UploadDirectory string
+	OAuthToken      string
+	ClientSecrets   string
 }
 
 type Archiver interface {
@@ -29,6 +32,13 @@ func New(a ArchiverConfig, logger *logrus.Logger) (archiver Archiver, err error)
 			a.Server,
 			a.Username,
 			a.Password,
+			a.UploadDirectory,
+			logger,
+		)
+	case "gdrive":
+		archiver = google_drive.New(
+			a.OAuthToken,
+			a.ClientSecrets,
 			a.UploadDirectory,
 			logger,
 		)

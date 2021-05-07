@@ -17,5 +17,18 @@
                  "--config", "../../etc/archivar.yaml",
                 ]
         },
+        {
+            "name": "gdrive",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/archivar/",
+            "envFile": "${workspaceFolder}/.env",
+            "args": ["-", "watch",
+                 "--debug", 
+                 "-i", "60",
+                 "--config", "../../etc/gdrive.yaml",
+                ]
+        },
     ]
 }
