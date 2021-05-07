@@ -11,7 +11,7 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
 │  GATHERER   │                           │  ARCHIVER    │
 │  │          │       ┌────────────┐      │  │           │
 │  └►IMAP     │       │            │      │  └►WEBDAV    │
-│             ├──────►│  ARCHIVAR  ├─────►│              │
+│             ├──────►│  ARCHIVAR  ├─────►│  └►GDRIVE    │
 │             │       │            │      │              │
 └─────────────┘       └────────────┘      └──────────────┘
 ```
@@ -26,9 +26,9 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
 - Archivers
   - [x] Webdav
   - [ ] Dropbox
-  - [ ] Google Drive
+  - [x] Google Drive
 - [x] cleanup logging
   - [ ] properly apply log levels to output
 - [x] deamonize
-  - [ ] graceful shutdown
+  - [x] graceful shutdown
 - [x] global service structgen to hold logger and other global stuff
