@@ -8,14 +8,20 @@ import (
 	"time"
 
 	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/filter"
 	"github.com/rwese/archivar/archivar/gatherer"
+	"github.com/rwese/archivar/archivar/job"
 	"github.com/sirupsen/logrus"
 )
 
 type Service struct {
-	logger          *logrus.Logger
-	pollingInterval time.Duration
-	jobs            []ArchivarJob
+	logger *logrus.Logger
+	jobs   []job.Job
+}
+
+type ConfigSub struct {
+	Type   string
+	Config interface{}
 }
 
 type Config struct {
@@ -24,19 +30,16 @@ type Config struct {
 			Debugging bool
 		}
 	}
-	Archivers map[string]archiver.ArchiverConfig
-	Gatherers map[string]gatherer.GathererConfig
-	Jobs      map[string]Jobs
+	Archivers map[string]*ConfigSub
+	Gatherers map[string]*ConfigSub
+	Filters   map[string]*ConfigSub
+	Jobs      map[string]ConfigJobs
 }
 
-type Jobs struct {
+type ConfigJobs struct {
 	Gatherer string
 	Archiver string
-}
-
-type ArchivarJob struct {
-	gatherer gatherer.Gatherer
-	archiver archiver.Archiver
+	Filters  []string
 }
 
 func New(config Config, logger *logrus.Logger) Service {
@@ -45,18 +48,20 @@ func New(config Config, logger *logrus.Logger) Service {
 	}
 
 	for _, job := range config.Jobs {
-		archiverConfig := config.Archivers[job.Archiver]
-		archiver, err := archiver.New(archiverConfig, s.logger)
-		if err != nil {
-			s.logger.Fatalln(err)
+
+		var filters []filter.Filter
+		var c *ConfigSub
+		for _, filterName := range job.Filters {
+			c = config.Filters[filterName]
+			f := filter.New(c.Type, c.Config, s.logger)
+			filters = append(filters, f)
 		}
 
-		gathererConfig := config.Gatherers[job.Gatherer]
-		gatherer, err := gatherer.New(gathererConfig, archiver, s.logger)
-		if err != nil {
-			s.logger.Fatalln(err)
-		}
+		c = config.Archivers[job.Archiver]
+		archiver := archiver.New(c.Type, c.Config, s.logger)
 
+		c = config.Gatherers[job.Gatherer]
+		gatherer := gatherer.New(c.Type, c.Config, archiver, filters, s.logger)
 		s.AddJob(gatherer, archiver)
 	}
 
@@ -64,7 +69,10 @@ func New(config Config, logger *logrus.Logger) Service {
 }
 
 func (s *Service) AddJob(gatherer gatherer.Gatherer, archiver archiver.Archiver) {
-	s.jobs = append(s.jobs, ArchivarJob{gatherer, archiver})
+	s.jobs = append(s.jobs, job.Job{
+		Gatherer: gatherer,
+		Archiver: archiver,
+	})
 }
 
 func (s *Service) run() {
@@ -78,9 +86,9 @@ func (s *Service) run() {
 	wg.Wait()
 }
 
-func (s *Service) runJob(job ArchivarJob, wg *sync.WaitGroup) {
+func (s *Service) runJob(job job.Job, wg *sync.WaitGroup) {
 	defer wg.Done()
-	err := job.gatherer.Download()
+	err := job.Download()
 	if err != nil {
 		s.logger.Fatalf("error: %s", err.Error())
 	}
@@ -100,6 +108,11 @@ func (s *Service) Watch(pollingInterval int) {
 			return
 		case <-schedule:
 			s.run()
+		}
+
+		if waitingTime <= 0 {
+			s.logger.Debugln("Stopping after single run")
+			break
 		}
 
 		time.Sleep(time.Second * 1)

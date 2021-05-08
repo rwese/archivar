@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/Eun/gdriver"
@@ -26,13 +24,10 @@ type GoogleDrive struct {
 	token           *oauth2.Token
 }
 
-func New(oauthToken, clientSecrets, uploadDirectory string, logger *logrus.Logger) *GoogleDrive {
-	return &GoogleDrive{
-		OAuthToken:      oauthToken,
-		ClientSecrets:   clientSecrets,
-		uploadDirectory: uploadDirectory,
-		logger:          logger,
-	}
+func New(config interface{}, logger *logrus.Logger) (gdrive *GoogleDrive) {
+	jsonM, _ := json.Marshal(config)
+	json.Unmarshal(jsonM, &gdrive)
+	return gdrive
 }
 
 // Retrieve a token, saves the token, then returns the generated client.
@@ -113,17 +108,5 @@ func (g *GoogleDrive) Connect() (newSession bool, err error) {
 		return false, err
 	}
 
-	return
-}
-
-func (g *GoogleDrive) Upload(fileName string, directory string, fileHandle io.Reader) (err error) {
-	_, err = g.Connect()
-	if err != nil {
-		return err
-	}
-
-	filePath := path.Join(g.uploadDirectory, directory, fileName)
-	_, err = g.drive.PutFile(filePath, fileHandle)
-	g.logger.Debugf("Uploaded '%s' to: %s", fileName, filePath)
 	return
 }

@@ -1,9 +1,8 @@
 package gatherer
 
 import (
-	"errors"
-
 	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/filter"
 	"github.com/rwese/archivar/archivar/gatherer/imap"
 	"github.com/sirupsen/logrus"
 )
@@ -13,31 +12,13 @@ type Gatherer interface {
 	Download() (err error)
 }
 
-type GathererConfig struct {
-	Type         string
-	Server       string
-	Username     string
-	Password     string
-	Token        string
-	KeepUploaded bool
-	ClientId     string
-	ClientSecret string
-}
-
-func New(g GathererConfig, archivar archiver.Archiver, logger *logrus.Logger) (gatherer Gatherer, err error) {
-	switch g.Type {
+func New(gathererType string, config interface{}, archivar archiver.Archiver, filters []filter.Filter, logger *logrus.Logger) Gatherer {
+	switch gathererType {
 	case "imap":
-		gatherer = imap.New(
-			g.Server,
-			g.Username,
-			g.Password,
-			g.KeepUploaded,
-			archivar,
-			logger,
-		)
+		return imap.New(config, archivar, filters, logger)
 	default:
-		err = errors.New("could not create new gatherer from given config")
+		logger.Panic("could not create new gatherer from given config")
 	}
 
-	return
+	return nil
 }

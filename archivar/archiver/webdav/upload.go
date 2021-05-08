@@ -13,13 +13,13 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 	}
 
 	if newSession {
-		_, err = w.client.Stat(w.uploadDirectory)
+		_, err = w.client.Stat(w.UploadDirectory)
 		if err != nil {
 			w.logger.Fatalf("failed to access upload directory: %s", err.Error())
 		}
 	}
 
-	uploadDirectory := path.Join(w.uploadDirectory, fileDirectory)
+	uploadDirectory := path.Join(w.UploadDirectory, fileDirectory)
 
 	if !w.knownUploadDirectories[uploadDirectory] {
 		w.logger.Debugf("uploadDirectory will be: %s", uploadDirectory)

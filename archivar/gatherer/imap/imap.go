@@ -2,36 +2,38 @@ package imap
 
 import (
 	"crypto/tls"
+	"encoding/json"
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/filter"
 	"github.com/sirupsen/logrus"
 )
 
 type Imap struct {
-	storage      archiver.Archiver
-	server       string
-	username     string
-	password     string
-	keepUploaded bool
-	client       *client.Client
-	inbox        string
-	section      *imap.BodySectionName
-	items        []imap.FetchItem
-	logger       *logrus.Logger
+	Server           string
+	Username         string
+	Password         string
+	KeepUploaded     bool
+	Inbox            string
+	AllowInsecureSSL bool
+	storage          archiver.Archiver
+	client           *client.Client
+	section          *imap.BodySectionName
+	items            []imap.FetchItem
+	logger           *logrus.Logger
 }
 
-func New(server string, username string, password string, keepUploaded bool, storage archiver.Archiver, logger *logrus.Logger) (i *Imap) {
-	i = &Imap{
+func New(config interface{}, storage archiver.Archiver, filters []filter.Filter, logger *logrus.Logger) *Imap {
+	i := &Imap{
 		storage:      storage,
-		server:       server,
-		username:     username,
-		password:     password,
-		keepUploaded: keepUploaded,
-		inbox:        "INBOX",
 		logger:       logger,
+		Inbox:        "Inbox",
+		KeepUploaded: true,
 	}
+	jsonM, _ := json.Marshal(config)
+	json.Unmarshal(jsonM, &i)
 
 	i.section = &imap.BodySectionName{}
 	i.items = []imap.FetchItem{i.section.FetchItem()}
@@ -39,15 +41,15 @@ func New(server string, username string, password string, keepUploaded bool, sto
 }
 
 func (i *Imap) Connect() (err error) {
-	tlsConfig := tls.Config{InsecureSkipVerify: true}
-	i.logger.Debugf("connecting to %s", i.server)
-	i.client, err = client.DialTLS(i.server, &tlsConfig)
+	tlsConfig := tls.Config{InsecureSkipVerify: i.AllowInsecureSSL}
+	i.logger.Debugf("connecting to %s", i.Server)
+	i.client, err = client.DialTLS(i.Server, &tlsConfig)
 	if err != nil {
 		i.logger.Fatalf("failed to connect to imap: %s", err.Error())
 	}
 
-	i.logger.Debugf("authenticate as %s using password %t", i.username, i.password != "")
-	if err = i.client.Login(i.username, i.password); err != nil {
+	i.logger.Debugf("authenticate as %s using password %t", i.Username, i.Password != "")
+	if err = i.client.Login(i.Username, i.Password); err != nil {
 		i.logger.Fatalf("failed to login to imap: %s", err.Error())
 	}
 
@@ -61,11 +63,11 @@ func (i *Imap) Download() (err error) {
 	}
 
 	defer i.client.Logout()
-	mbox, err := i.client.Select(i.inbox, false)
+	mbox, err := i.client.Select(i.Inbox, false)
 	if err != nil {
 		i.logger.Fatal(err)
 	}
-	i.logger.Debugf("selected '%s'", i.inbox)
+	i.logger.Debugf("selected '%s'", i.Inbox)
 
 	if mbox.Messages == 0 {
 		i.logger.Debug("no messages")
@@ -98,7 +100,7 @@ func (i *Imap) Download() (err error) {
 		return err
 	}
 
-	if !i.keepUploaded {
+	if !i.KeepUploaded {
 		i.logger.Debug("deleting processed messages")
 
 		if err = i.flagAndDeleteMessages(readMsgSeq); err != nil {

@@ -121,7 +121,6 @@ func (i Imap) processMessage(msg *imap.Message) (err error) {
 			if err = i.storage.Upload(filename, filePrefixPath, p.Body); err != nil {
 				return err
 			}
-
 		}
 	}
 	return

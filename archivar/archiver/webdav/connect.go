@@ -7,8 +7,8 @@ func (w *Webdav) Connect() (newSession bool, err error) {
 		return
 	}
 
-	w.client = gowebdav.NewClient(w.server, w.userName, w.userPassword)
-	w.logger.Debugf("connecting to %s as %s\n", w.server, w.userName)
+	w.client = gowebdav.NewClient(w.Server, w.UserName, w.Password)
+	w.logger.Debugf("connecting to %s as %s\n", w.Server, w.UserName)
 	err = w.client.Connect()
 	if err != nil {
 		w.logger.Fatalf("failed to connect: %s\n", err.Error())
