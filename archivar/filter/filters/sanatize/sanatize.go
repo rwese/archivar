@@ -38,7 +38,7 @@ func New(config interface{}, logger *logrus.Logger) *Sanatize {
 	return f
 }
 
-func (f *Sanatize) Filter(filename *string, filepath *string, data io.Reader) (filterResult.Results, error) {
+func (f *Sanatize) Filter(filename *string, filepath *string, data *io.Reader) (filterResult.Results, error) {
 	*filename = f.sanatize(*filename)
 	return filterResult.Allow, nil
 }

@@ -6,12 +6,13 @@ import (
 	"github.com/rwese/archivar/archivar/archiver"
 	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/rwese/archivar/archivar/filter/filters/filename"
+	"github.com/rwese/archivar/archivar/filter/filters/filesize"
 	"github.com/rwese/archivar/archivar/filter/filters/sanatize"
 	"github.com/sirupsen/logrus"
 )
 
 type Filter interface {
-	Filter(filename *string, filepath *string, data io.Reader) (filterResult.Results, error)
+	Filter(filename *string, filepath *string, data *io.Reader) (filterResult.Results, error)
 }
 
 func New(filterType string, config interface{}, logger *logrus.Logger) (filter Filter) {
@@ -23,6 +24,11 @@ func New(filterType string, config interface{}, logger *logrus.Logger) (filter F
 		)
 	case "sanatize":
 		return sanatize.New(
+			config,
+			logger,
+		)
+	case "filesize":
+		return filesize.New(
 			config,
 			logger,
 		)
@@ -45,7 +51,7 @@ type FilterArchiver struct {
 }
 
 func (f *FilterArchiver) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
-	result, err := f.filter.Filter(&fileName, &fileDirectory, fileHandle)
+	result, err := f.filter.Filter(&fileName, &fileDirectory, &fileHandle)
 	if err != nil {
 		return err
 	}

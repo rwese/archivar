@@ -13,6 +13,7 @@
             "envFile": "${workspaceFolder}/.env",
             "args": ["-", "watch",
                  "--debug", 
+                 "--profiler", 
                 //  "--quiet", 
                  "-i", "50",
                  "--config", "../../etc/archivar.yaml",

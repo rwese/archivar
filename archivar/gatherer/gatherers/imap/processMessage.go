@@ -100,11 +100,7 @@ func (i Imap) processMessage(msg *imap.Message) (err error) {
 				continue
 			}
 
-			cleanSubject := subjectCleanup.ReplaceAllString(mailData.subject, "")
-			if len(cleanSubject) > SUBJECT_LENGTH {
-				cleanSubject = cleanSubject[:SUBJECT_LENGTH]
-			}
-			filename := cleanSubject + fileExt
+			filename := mailData.subject + fileExt
 			if err = i.storage.Upload(filename, filePrefixPath, p.Body); err != nil {
 				return err
 			}

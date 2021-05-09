@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/rwese/archivar/archivar"
 	"github.com/sirupsen/logrus"
@@ -14,10 +16,11 @@ func main() {
 		configFile         string
 		debugging          bool
 		quiet              bool
+		profiler           bool
 		defaultJobInterval int
 		serviceConfig      archivar.Config
 	)
-
+	profilerPort := 6060
 	logger := logrus.New()
 
 	var cmdWatch = &cobra.Command{
@@ -62,12 +65,20 @@ and running the archivers until receiving an interrupt signal.`,
 			if defaultJobInterval == 0 {
 				defaultJobInterval = serviceConfig.Settings.DefaultInterval
 			}
+
+			go func() {
+				listenHostPort := "0.0.0.0:" + fmt.Sprintf("%d", profilerPort)
+				logger.Warnln("Run profiler", listenHostPort)
+				logger.Warnln(http.ListenAndServe(listenHostPort, nil))
+			}()
 		},
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "archivar.yaml", "Configfile")
 	rootCmd.PersistentFlags().BoolVarP(&debugging, "debug", "d", false, "enable verbose logging output")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress all non-error output")
+	rootCmd.PersistentFlags().BoolVar(&profiler, "profiler", false, "run go profiler server")
+	rootCmd.PersistentFlags().IntVar(&profilerPort, "profilerPort", profilerPort, "run go profiler server")
 	rootCmd.AddCommand(cmdWatch)
 	err := rootCmd.Execute()
 	if err != nil {
