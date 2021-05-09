@@ -105,7 +105,6 @@ func (i Imap) processMessage(msg *imap.Message) (err error) {
 				cleanSubject = cleanSubject[:SUBJECT_LENGTH]
 			}
 			filename := cleanSubject + fileExt
-
 			if err = i.storage.Upload(filename, filePrefixPath, p.Body); err != nil {
 				return err
 			}

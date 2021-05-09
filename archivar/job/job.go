@@ -7,6 +7,9 @@ import (
 )
 
 type Job struct {
+	Name     string
+	Interval int
+	Errors   int
 	Gatherer gatherer.Gatherer
 	Archiver archiver.Archiver
 	Logger   *logrus.Logger
@@ -14,4 +17,11 @@ type Job struct {
 
 func (j *Job) Download() error {
 	return j.Gatherer.Download()
+}
+
+type JobsConfig struct {
+	Interval int
+	Gatherer string
+	Archiver string
+	Filters  []string
 }

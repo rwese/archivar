@@ -2,20 +2,19 @@ package gatherer
 
 import (
 	"github.com/rwese/archivar/archivar/archiver"
-	"github.com/rwese/archivar/archivar/filter"
-	"github.com/rwese/archivar/archivar/gatherer/imap"
+	"github.com/rwese/archivar/archivar/gatherer/gatherers/imap"
 	"github.com/sirupsen/logrus"
 )
 
 type Gatherer interface {
-	Connect() (err error)
-	Download() (err error)
+	Connect() error
+	Download() error
 }
 
-func New(gathererType string, config interface{}, archivar archiver.Archiver, filters []filter.Filter, logger *logrus.Logger) Gatherer {
+func New(gathererType string, config interface{}, archivar archiver.Archiver, logger *logrus.Logger) Gatherer {
 	switch gathererType {
 	case "imap":
-		return imap.New(config, archivar, filters, logger)
+		return imap.New(config, archivar, logger)
 	default:
 		logger.Panic("could not create new gatherer from given config")
 	}

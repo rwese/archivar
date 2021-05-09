@@ -1,8 +1,14 @@
 package webdav
 
 import (
+	"errors"
 	"io"
+	"io/fs"
+	"math/rand"
+	"net/http"
 	"path"
+	"strconv"
+	"time"
 )
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
@@ -36,5 +42,19 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 
 	uploadFileName := path.Join(uploadDirectory, fileName)
 	w.logger.Debugf("uploading: %s", uploadFileName)
-	return w.client.WriteStream(uploadFileName, fileHandle, 0644)
+
+	err = w.client.WriteStream(uploadFileName, fileHandle, 0644)
+	if !w.isRetry && isConflictError(err) {
+		w.logger.Warnf("collision writing to: %s, retrying", uploadFileName)
+		time.Sleep(time.Second * time.Duration(rand.Intn(5)))
+		w.isRetry = true
+		return w.Upload(fileName, fileDirectory, fileHandle)
+	}
+	w.isRetry = false
+	return
+}
+
+func isConflictError(err error) bool {
+	var perr *fs.PathError
+	return (err != nil && errors.As(err, &perr) && perr.Unwrap().Error() == strconv.Itoa(http.StatusLocked))
 }

@@ -3,8 +3,8 @@ package archiver
 import (
 	"io"
 
-	"github.com/rwese/archivar/archivar/archiver/google_drive"
-	"github.com/rwese/archivar/archivar/archiver/webdav"
+	"github.com/rwese/archivar/archivar/archiver/archivers/google_drive"
+	"github.com/rwese/archivar/archivar/archiver/archivers/webdav"
 	"github.com/sirupsen/logrus"
 )
 

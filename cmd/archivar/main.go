@@ -12,7 +12,7 @@ import (
 func main() {
 	var configFile string
 	var debugging bool
-	var watchInterval int
+	var defaultJobInterval int
 	var serviceConfig archivar.Config
 	var logger = logrus.New()
 
@@ -23,17 +23,17 @@ func main() {
 and running the archivers until receiving an interrupt signal.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			s := archivar.New(serviceConfig, logger)
-			logger.Debugf("running watch with interval: %d", watchInterval)
-			s.Watch(watchInterval)
+			logger.Debugf("running watch with default interval: %d", defaultJobInterval)
+			s.RunJobs(defaultJobInterval)
 		},
 	}
 
-	cmdWatch.Flags().IntVarP(&watchInterval, "interval", "i", 60, "wait time between processing of all configured archivers")
+	cmdWatch.Flags().IntVarP(&defaultJobInterval, "interval", "i", defaultJobInterval, "default wait time between processing of all configured archivers, can be overriden by specifying it per job")
 
 	var rootCmd = &cobra.Command{
 		Use: "app",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			viper.SetConfigName(configFile) // name of config file (without extension)
+			viper.SetConfigName(configFile)
 			viper.SetConfigType("yaml")
 			viper.AddConfigPath(".")
 			viper.AddConfigPath("/etc/go-archivar/")
@@ -43,12 +43,16 @@ and running the archivers until receiving an interrupt signal.`,
 			}
 
 			err = viper.Unmarshal(&serviceConfig)
-			if err != nil { // Handle errors reading the config file
+			if err != nil {
 				panic(fmt.Errorf("fatal error config file: %s", err))
 			}
 
 			if debugging || serviceConfig.Settings.Log.Debugging {
 				logger.SetLevel(logrus.DebugLevel)
+			}
+
+			if defaultJobInterval == 0 {
+				defaultJobInterval = serviceConfig.Settings.DefaultInterval
 			}
 		},
 	}

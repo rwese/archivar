@@ -7,7 +7,6 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/rwese/archivar/archivar/archiver"
-	"github.com/rwese/archivar/archivar/filter"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,7 +24,7 @@ type Imap struct {
 	logger           *logrus.Logger
 }
 
-func New(config interface{}, storage archiver.Archiver, filters []filter.Filter, logger *logrus.Logger) *Imap {
+func New(config interface{}, storage archiver.Archiver, logger *logrus.Logger) *Imap {
 	i := &Imap{
 		storage:      storage,
 		logger:       logger,

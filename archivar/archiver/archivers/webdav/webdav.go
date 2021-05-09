@@ -16,6 +16,7 @@ type Webdav struct {
 	logger                 *logrus.Logger
 	knownUploadDirectories map[string]bool
 	client                 *gowebdav.Client
+	isRetry                bool
 }
 
 // New will return a new webdav uploader
