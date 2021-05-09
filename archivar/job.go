@@ -21,7 +21,7 @@ func (s *Archivar) AddJob(jobName string, interval int, gatherer gatherer.Gather
 
 func (s *Archivar) runJob(job job.Job, ctx context.Context, stop context.CancelFunc, wg *sync.WaitGroup) {
 	defer wg.Done()
-	s.logger.Debugf("Starting Job %s, every %d seconds", job.Name, job.Interval)
+	s.logger.Infof("Starting Job %s, every %d seconds", job.Name, job.Interval)
 
 	waitingTime := time.Duration(job.Interval) * time.Second
 	schedule := time.After(time.Second * 0)

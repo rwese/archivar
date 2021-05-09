@@ -10,11 +10,15 @@ import (
 )
 
 func main() {
-	var configFile string
-	var debugging bool
-	var defaultJobInterval int
-	var serviceConfig archivar.Config
-	var logger = logrus.New()
+	var (
+		configFile         string
+		debugging          bool
+		quiet              bool
+		defaultJobInterval int
+		serviceConfig      archivar.Config
+	)
+
+	logger := logrus.New()
 
 	var cmdWatch = &cobra.Command{
 		Use:   "watch",
@@ -51,6 +55,10 @@ and running the archivers until receiving an interrupt signal.`,
 				logger.SetLevel(logrus.DebugLevel)
 			}
 
+			if quiet {
+				logger.SetLevel(logrus.ErrorLevel)
+			}
+
 			if defaultJobInterval == 0 {
 				defaultJobInterval = serviceConfig.Settings.DefaultInterval
 			}
@@ -59,6 +67,7 @@ and running the archivers until receiving an interrupt signal.`,
 
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "archivar.yaml", "Configfile")
 	rootCmd.PersistentFlags().BoolVarP(&debugging, "debug", "d", false, "enable verbose logging output")
+	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress all non-error output")
 	rootCmd.AddCommand(cmdWatch)
 	err := rootCmd.Execute()
 	if err != nil {
