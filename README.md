@@ -7,13 +7,20 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
 ## DIAGRAM
 
 ```
-┌─────────────┐                           ┌──────────────┐
-│  GATHERER   │                           │  ARCHIVER    │
-│  │          │       ┌────────────┐      │  │           │
-│  └►IMAP     │       │            │      │  └►WEBDAV    │
-│             ├──────►│  ARCHIVAR  ├─────►│  └►GDRIVE    │
-│             │       │            │      │              │
-└─────────────┘       └────────────┘      └──────────────┘
+┌─────────────┐  ┌──────────────┐  ┌────────────┐  ┌────────────┐
+│ GATHERER    │  │ FILTERS      │  │ PROCESSOR  │  │ ARCHIVER   │
+│ │           │  │ │            │  │ │          │  │ │          │
+│ └►IMAP      ├─►│ │►Filename   ├─►│ └►SANATIZE ├─►│ │►WEBDAV   │
+│             │  │ └►Filesize   │  │            │  │ └►GDRIVE   │
+│             │  │              │  │            │  │            │
+└─────────────┘  └───┬──────────┤  └─┬──────────┤  └────────────┘
+                     │ FILTER   │    │ PROCESS  │
+                     │ │        │    └──────────┘
+                     │ │►ACCEPT │
+                     │ │►REJECT │
+                     │ └►MISS   │
+                     │          │
+                     └──────────┘
 ```
 
 ## TODO
@@ -23,10 +30,18 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
   - [ ] POP3
   - Reddit
     - [ ] Saved Posts
+    - [ ] Top/New/Hot of Subreddit
+    - [ ] w/o Post Comments?
 - Archivers
   - [x] Webdav
   - [ ] Dropbox
   - [x] Google Drive
+- Processors
+  - [x] Sanatizer (Filename)
+- Filters
+  - [x] Filename
+  - [x] Filesize
+  - [ ] Image (Size, Dpi)
 - [x] cleanup logging
   - [ ] properly apply log levels to output
 - [x] deamonize
