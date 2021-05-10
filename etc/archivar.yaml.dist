@@ -8,7 +8,7 @@ Archivers:
     Config:
       Username:
       Password:
-      Server: https://server/remote.php/dav/files/wese/
+      Server: https://server/remote.php/dav/files/username/
       UploadDirectory: /upload/
 Gatherers:
   imap_mail_account:
