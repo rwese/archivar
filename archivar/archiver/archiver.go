@@ -20,7 +20,7 @@ func New(archiverType string, config interface{}, logger *logrus.Logger) (archiv
 	case "gdrive":
 		return google_drive.New(config, logger)
 	default:
-		logger.Panic("could not create new archiver from given config")
+		logger.Panicf("could not create new archiver '%s' from given config", archiverType)
 	}
 
 	return nil

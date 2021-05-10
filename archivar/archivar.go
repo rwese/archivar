@@ -5,6 +5,7 @@ import (
 	"github.com/rwese/archivar/archivar/filter"
 	"github.com/rwese/archivar/archivar/gatherer"
 	"github.com/rwese/archivar/archivar/job"
+	"github.com/rwese/archivar/archivar/processor"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,10 +28,11 @@ type Config struct {
 			Debugging bool
 		}
 	}
-	Archivers map[string]ConfigSub
-	Gatherers map[string]ConfigSub
-	Filters   map[string]ConfigSub
-	Jobs      map[string]job.JobsConfig
+	Archivers  map[string]ConfigSub
+	Gatherers  map[string]ConfigSub
+	Filters    map[string]ConfigSub
+	Processors map[string]ConfigSub
+	Jobs       map[string]job.JobsConfig
 }
 
 func New(config Config, logger *logrus.Logger) Archivar {
@@ -54,6 +56,12 @@ func (s *Archivar) addJob(jobName string, job job.JobsConfig) {
 
 	c := s.config.Archivers[job.Archiver]
 	archiver := archiver.New(c.Type, c.Config, s.logger)
+
+	for _, processorName := range job.Processors {
+		c = s.config.Processors[processorName]
+		p := processor.New(c.Type, c.Config, s.logger)
+		archiver = processor.ProcessorArchiverMiddleware(archiver, p)
+	}
 
 	for _, filterName := range job.Filters {
 		c = s.config.Filters[filterName]

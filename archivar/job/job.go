@@ -20,8 +20,9 @@ func (j *Job) Download() error {
 }
 
 type JobsConfig struct {
-	Interval int
-	Gatherer string
-	Archiver string
-	Filters  []string
+	Interval   int
+	Gatherer   string
+	Archiver   string
+	Filters    []string
+	Processors []string
 }

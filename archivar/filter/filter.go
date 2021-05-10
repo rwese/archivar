@@ -7,7 +7,6 @@ import (
 	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/rwese/archivar/archivar/filter/filters/filename"
 	"github.com/rwese/archivar/archivar/filter/filters/filesize"
-	"github.com/rwese/archivar/archivar/filter/filters/sanatize"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,18 +21,13 @@ func New(filterType string, config interface{}, logger *logrus.Logger) (filter F
 			config,
 			logger,
 		)
-	case "sanatize":
-		return sanatize.New(
-			config,
-			logger,
-		)
 	case "filesize":
 		return filesize.New(
 			config,
 			logger,
 		)
 	default:
-		logger.Panic("could not create new filter from given config")
+		logger.Panicf("could not create new filter '%s' from given config", filterType)
 	}
 
 	return nil

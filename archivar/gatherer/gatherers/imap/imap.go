@@ -14,7 +14,7 @@ type Imap struct {
 	Server           string
 	Username         string
 	Password         string
-	KeepUploaded     bool
+	DeleteDownloaded bool
 	Inbox            string
 	AllowInsecureSSL bool
 	storage          archiver.Archiver
@@ -26,10 +26,9 @@ type Imap struct {
 
 func New(config interface{}, storage archiver.Archiver, logger *logrus.Logger) *Imap {
 	i := &Imap{
-		storage:      storage,
-		logger:       logger,
-		Inbox:        "Inbox",
-		KeepUploaded: true,
+		storage: storage,
+		logger:  logger,
+		Inbox:   "Inbox",
 	}
 	jsonM, _ := json.Marshal(config)
 	json.Unmarshal(jsonM, &i)
@@ -99,7 +98,7 @@ func (i *Imap) Download() (err error) {
 		return err
 	}
 
-	if !i.KeepUploaded {
+	if i.DeleteDownloaded {
 		i.logger.Debug("deleting processed messages")
 
 		if err = i.flagAndDeleteMessages(readMsgSeq); err != nil {

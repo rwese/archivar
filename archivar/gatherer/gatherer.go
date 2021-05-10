@@ -16,7 +16,7 @@ func New(gathererType string, config interface{}, archivar archiver.Archiver, lo
 	case "imap":
 		return imap.New(config, archivar, logger)
 	default:
-		logger.Panic("could not create new gatherer from given config")
+		logger.Panicf("could not create new gatherer '%s' from given config", gathererType)
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package sanatize
+package sanatizer
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,9 +37,9 @@ func New(config interface{}, logger *logrus.Logger) *Sanatize {
 	return f
 }
 
-func (f *Sanatize) Filter(filename *string, filepath *string, data *io.Reader) (filterResult.Results, error) {
+func (f *Sanatize) Process(filename *string, filepath *string, data *io.Reader) error {
 	*filename = f.sanatize(*filename)
-	return filterResult.Allow, nil
+	return nil
 }
 
 func (f *Sanatize) sanatize(filename string) string {
