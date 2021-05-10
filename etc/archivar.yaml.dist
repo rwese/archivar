@@ -1,0 +1,58 @@
+Settings:
+  # DefaultInterval: 60
+  Log:
+    # Debugging: True
+Archivers:
+  webdav_nextcloud:
+    Type: webdav
+    Config:
+      Username:
+      Password:
+      Server: https://server/remote.php/dav/files/wese/
+      UploadDirectory: /upload/
+Gatherers:
+  imap_mail_account:
+    Type: imap
+    Config:
+      Server: server:993
+      Username:
+      Password:
+      # DeleteDownloaded: False
+      # AllowInsecureSSL: False
+Processors:
+  sanatizer:
+    Type: sanatize
+    Config:
+      TrimWhitespaces: True
+      # CharacterBlacklistRegexs:
+      #   - "[^[:word:]-_. ]"
+Filters:
+  max_100mb:
+    Type: filesize
+    Config:
+      # MinSizeBytes: 100
+      MaxSizeBytes: 100000000
+  pdf_only:
+    Type: filename
+    Config:
+      Allow:
+        - (?i).pdf$
+      Reject:
+        - .*
+  reject_exe:
+    Type: filename
+    Config:
+      Reject:
+        - (?i).exe$
+        # - (?i).html$
+Jobs:
+  imap_to_webdav:
+    Interval: 600
+    Gatherer: imap_mail_account
+    Archiver: webdav_nextcloud
+    Filters:
+      - reject_exe
+      - pdf_only
+      - filesize_filter
+    Processors:
+      - sanatizer
