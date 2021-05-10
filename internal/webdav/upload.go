@@ -19,31 +19,29 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 	}
 
 	if newSession {
-		_, err = w.client.Stat(w.UploadDirectory)
+		_, err = w.Client.Stat(fileDirectory)
 		if err != nil {
 			w.logger.Fatalf("failed to access upload directory: %s", err.Error())
 		}
 	}
 
-	uploadDirectory := path.Join(w.UploadDirectory, fileDirectory)
-
-	if !w.knownUploadDirectories[uploadDirectory] {
-		w.logger.Debugf("uploadDirectory will be: %s", uploadDirectory)
-		_, err = w.client.Stat(uploadDirectory)
+	if !w.KnownUploadDirectories[fileDirectory] {
+		w.logger.Debugf("fileDirectory will be: %s", fileDirectory)
+		_, err = w.Client.Stat(fileDirectory)
 		if err != nil {
-			err = w.client.MkdirAll(uploadDirectory, 0644)
+			err = w.Client.MkdirAll(fileDirectory, 0644)
 			if err != nil {
 				w.logger.Fatalf("failed to create uploadTargetFolder: %s", err.Error())
 				return
 			}
 		}
-		w.knownUploadDirectories[uploadDirectory] = true
+		w.KnownUploadDirectories[fileDirectory] = true
 	}
 
-	uploadFileName := path.Join(uploadDirectory, fileName)
+	uploadFileName := path.Join(fileDirectory, fileName)
 	w.logger.Debugf("uploading: %s", uploadFileName)
 
-	err = w.client.WriteStream(uploadFileName, fileHandle, 0644)
+	err = w.Client.WriteStream(uploadFileName, fileHandle, 0644)
 	if !w.isRetry && isConflictError(err) {
 		w.logger.Warnf("collision writing to: %s, retrying", uploadFileName)
 		time.Sleep(time.Second * time.Duration(rand.Intn(5)))
