@@ -59,5 +59,5 @@ func (f *Filename) Filter(filename *string, filepath *string, data *io.Reader) (
 		}
 	}
 
-	return filterResult.NoAction, nil
+	return filterResult.Miss, nil
 }
