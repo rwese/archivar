@@ -1,8 +1,11 @@
 # Archivar
 
-Is a small golang tool to archive/move resources from one location to another.
+Is a small golang tool to archive/move resources from one location to another,
+for example archiving mails sent to a specific mailadress on a webdav storage.
+Previously I used IFTTT or YahooPipelines for these tasks but I wanted to keep
+working with GO and tinker around.
 
-For example archiving mails sent to a specific mailadress on a webdav storage.
+**THIS - IS - (TO BE) - HEAVILY - OVERENGINEERED** but clean _enough_
 
 ## DIAGRAM
 
@@ -25,9 +28,22 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
 
 ## TODO
 
+- General
+  - [ ] Solution to remember already archived things
+  - [ ] How to handle Processors adding files
+  - [ ] Tests now that things shape up
+  - [ ] Prometheus Instrumenting
+  - [ ] More docs
+  - [x] Middleware-like for Processors and Filters
+  - [x] Use Github-Actions
+  - [x] Use Github-Packages for DockerImages
+  - [x] MultiStaged DockerFile
 - Gatherers
   - [x] IMAP
   - [ ] POP3
+  - [ ] Webdav
+  - [ ] Dropbox
+  - [ ] Google Drive
   - Reddit
     - [ ] Saved Posts
     - [ ] Top/New/Hot of Subreddit
@@ -38,12 +54,14 @@ For example archiving mails sent to a specific mailadress on a webdav storage.
   - [x] Google Drive
 - Processors
   - [x] Sanatizer (Filename)
+  - [ ] OCR
+  - [ ] Anti Virus (rly?)
 - Filters
   - [x] Filename
   - [x] Filesize
   - [ ] Image (Size, Dpi)
 - [x] cleanup logging
-  - [ ] properly apply log levels to output
+  - [x] properly apply log levels to output
 - [x] deamonize
   - [x] graceful shutdown
 - [x] global service structgen to hold logger and other global stuff
