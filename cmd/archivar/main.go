@@ -66,11 +66,13 @@ and running the archivers until receiving an interrupt signal.`,
 				defaultJobInterval = serviceConfig.Settings.DefaultInterval
 			}
 
-			go func() {
-				listenHostPort := "0.0.0.0:" + fmt.Sprintf("%d", profilerPort)
-				logger.Warnln("Run profiler", listenHostPort)
-				logger.Warnln(http.ListenAndServe(listenHostPort, nil))
-			}()
+			if profiler {
+				go func() {
+					listenHostPort := "0.0.0.0:" + fmt.Sprintf("%d", profilerPort)
+					logger.Warnln("Run profiler", listenHostPort)
+					logger.Warnln(http.ListenAndServe(listenHostPort, nil))
+				}()
+			}
 		},
 	}
 
