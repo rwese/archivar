@@ -1,11 +1,11 @@
 package sanatizer
 
 import (
-	"encoding/json"
-	"io"
 	"regexp"
 	"strings"
 
+	"github.com/rwese/archivar/internal/file"
+	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,25 +20,24 @@ type Sanatize struct {
 	characterReplaceRegexs []*regexp.Regexp
 }
 
-func New(config interface{}, logger *logrus.Logger) *Sanatize {
-	jsonM, _ := json.Marshal(config)
-	var fc SanatizeConfig
-	json.Unmarshal(jsonM, &fc)
+func New(c interface{}, logger *logrus.Logger) *Sanatize {
+	var pc SanatizeConfig
+	config.ConfigFromStruct(c, &pc)
 
 	f := &Sanatize{
 		logger:          logger,
-		trimWhitespaces: fc.TrimWhitespaces,
+		trimWhitespaces: pc.TrimWhitespaces,
 	}
 
-	for _, regex := range fc.CharacterBlacklistRegexs {
+	for _, regex := range pc.CharacterBlacklistRegexs {
 		f.characterReplaceRegexs = append(f.characterReplaceRegexs, regexp.MustCompile(regex))
 	}
 
 	return f
 }
 
-func (f *Sanatize) Process(filename *string, filepath *string, data *io.Reader) error {
-	*filename = f.sanatize(*filename)
+func (f *Sanatize) Process(file *file.File) error {
+	file.Filename = f.sanatize(file.Filename)
 	return nil
 }
 

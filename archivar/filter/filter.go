@@ -1,17 +1,16 @@
 package filter
 
 import (
-	"io"
-
 	"github.com/rwese/archivar/archivar/archiver"
 	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/rwese/archivar/archivar/filter/filters/filename"
 	"github.com/rwese/archivar/archivar/filter/filters/filesize"
+	"github.com/rwese/archivar/internal/file"
 	"github.com/sirupsen/logrus"
 )
 
 type Filter interface {
-	Filter(filename *string, filepath *string, data *io.Reader) (filterResult.Results, error)
+	Filter(*file.File) (filterResult.Results, error)
 }
 
 func New(filterType string, config interface{}, logger *logrus.Logger) (filter Filter) {
@@ -44,8 +43,8 @@ type FilterArchiver struct {
 	filter Filter
 }
 
-func (f *FilterArchiver) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
-	result, err := f.filter.Filter(&fileName, &fileDirectory, &fileHandle)
+func (f *FilterArchiver) Upload(file file.File) (err error) {
+	result, err := f.filter.Filter(&file)
 	if err != nil {
 		return err
 	}
@@ -54,5 +53,5 @@ func (f *FilterArchiver) Upload(fileName string, fileDirectory string, fileHandl
 		return nil
 	}
 
-	return f.next.Upload(fileName, fileDirectory, fileHandle)
+	return f.next.Upload(file)
 }

@@ -1,41 +1,40 @@
 package webdav
 
 import (
-	"encoding/json"
-
+	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/internal/file"
+	webdavClient "github.com/rwese/archivar/internal/webdav"
+	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
-	"github.com/studio-b12/gowebdav"
 )
 
 // Webdav allows to upload files to a remote webdav server
 type Webdav struct {
-	Server                 string
-	UserName               string
-	Password               string
-	UploadDirectory        string
-	isRetry                bool
-	knownUploadDirectories map[string]bool
-	logger                 *logrus.Logger
-	client                 *gowebdav.Client
+	storage archiver.Archiver
+	logger  *logrus.Logger
+	client  *webdavClient.Webdav
 }
 
-// New will return a new webdav uploader
-func New(config interface{}, logger *logrus.Logger) *Webdav {
+// New will return a new webdav downloader
+func New(c interface{}, storage archiver.Archiver, logger *logrus.Logger) *Webdav {
 	webdav := &Webdav{
-		logger: logger,
+		storage: storage,
+		logger:  logger,
+		client:  webdavClient.New(c, logger),
 	}
-	webdav.knownUploadDirectories = make(map[string]bool)
-	jsonM, _ := json.Marshal(config)
-	json.Unmarshal(jsonM, &webdav)
+	config.ConfigFromStruct(c, &webdav)
 	return webdav
 }
 
-func (w *Webdav) Connect() (err error) {
-
-	return
-}
-
 func (w *Webdav) Download() (err error) {
+	files := make(chan file.File)
+	if err = w.client.DownloadFiles("", files); err != nil {
+		return
+	}
+
+	for file := range files {
+		w.storage.Upload(file)
+	}
 
 	return
 }

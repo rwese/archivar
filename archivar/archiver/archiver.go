@@ -1,15 +1,15 @@
 package archiver
 
 import (
-	"io"
-
 	"github.com/rwese/archivar/archivar/archiver/archivers/google_drive"
 	"github.com/rwese/archivar/archivar/archiver/archivers/webdav"
+	"github.com/rwese/archivar/internal/file"
 	"github.com/sirupsen/logrus"
 )
 
+type UploadFunc func(file.File) (err error)
 type Archiver interface {
-	Upload(fileName string, directory string, fileHandle io.Reader) (err error)
+	Upload(file.File) (err error)
 }
 
 func New(archiverType string, config interface{}, logger *logrus.Logger) (archiver Archiver) {

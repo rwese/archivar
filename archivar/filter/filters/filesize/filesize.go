@@ -2,10 +2,11 @@ package filesize
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 
 	"github.com/rwese/archivar/archivar/filter/filterResult"
+	"github.com/rwese/archivar/internal/file"
+	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,42 +21,46 @@ type Filesize struct {
 	logger       *logrus.Logger
 }
 
-func New(config interface{}, logger *logrus.Logger) *Filesize {
-	jsonM, _ := json.Marshal(config)
-	var c FilesizeConfig
-	json.Unmarshal(jsonM, &c)
+func New(c interface{}, logger *logrus.Logger) *Filesize {
+	var fc FilesizeConfig
+	config.ConfigFromStruct(c, &fc)
 
-	if c.MaxSizeBytes == 0 && c.MinSizeBytes == 0 {
+	if fc.MaxSizeBytes == 0 && fc.MinSizeBytes == 0 {
 		logger.Fatalln("Filesize filter requires at least one MaxSizeBytes/MinSizeBytes")
 	}
 
 	f := &Filesize{
 		logger:       logger,
-		MaxSizeBytes: c.MaxSizeBytes,
-		MinSizeBytes: c.MinSizeBytes,
+		MaxSizeBytes: fc.MaxSizeBytes,
+		MinSizeBytes: fc.MinSizeBytes,
 	}
 
 	return f
 }
 
-func (f *Filesize) Filter(filename *string, filepath *string, data *io.Reader) (filterResult.Results, error) {
-	r, err := io.ReadAll(*data)
+func (f *Filesize) Filter(file *file.File) (result filterResult.Results, err error) {
+	if f.MaxSizeBytes > 0 {
+		file.Body = io.LimitReader(file.Body, int64(f.MaxSizeBytes)+1)
+	}
+
+	r, err := io.ReadAll(file.Body)
 	if err != nil {
 		return filterResult.Allow, err
 	}
 
-	*data = bytes.NewReader(r)
 	fileSize := len(r)
+	file.Body = bytes.NewReader(r)
+
 	if f.MaxSizeBytes > 0 && fileSize > f.MaxSizeBytes {
-		f.logger.Debugf("Reject Filesize-MaxSizeBytes %s", *filename)
-		return filterResult.Reject, nil
+		f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", file.Filename)
+		result = filterResult.Reject
+	} else if f.MinSizeBytes > 0 && fileSize < f.MinSizeBytes {
+		f.logger.Debugf("Filesize: Reject MinSizeBytes %s", file.Filename)
+		result = filterResult.Reject
+	} else {
+		f.logger.Debugf("Filesize: Fallthrough %s", file.Filename)
+		result = filterResult.Allow
 	}
 
-	if f.MinSizeBytes > 0 && fileSize < f.MinSizeBytes {
-		f.logger.Debugf("Reject Filesize-MinSizeBytes %s", *filename)
-		return filterResult.Reject, nil
-	}
-
-	f.logger.Debugf("Fallthrough Filesize %s", *filename)
-	return filterResult.Allow, err
+	return
 }

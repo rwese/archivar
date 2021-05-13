@@ -1,8 +1,7 @@
 package webdav
 
 import (
-	"encoding/json"
-
+	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
 	"github.com/studio-b12/gowebdav"
 )
@@ -11,6 +10,7 @@ type Webdav struct {
 	Server                 string
 	UserName               string
 	Password               string
+	UploadDirectory        string
 	KnownUploadDirectories map[string]bool
 	isRetry                bool
 	logger                 *logrus.Logger
@@ -18,11 +18,10 @@ type Webdav struct {
 }
 
 // New will return a new webdav uploader
-func New(config interface{}, logger *logrus.Logger) *Webdav {
+func New(c interface{}, logger *logrus.Logger) *Webdav {
 	webdav := &Webdav{logger: logger}
-	jsonM, _ := json.Marshal(config)
+	config.ConfigFromStruct(c, &webdav)
 	webdav.KnownUploadDirectories = make(map[string]bool)
-	json.Unmarshal(jsonM, &webdav)
 	return webdav
 }
 

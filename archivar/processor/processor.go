@@ -1,15 +1,14 @@
 package processor
 
 import (
-	"io"
-
 	"github.com/rwese/archivar/archivar/archiver"
 	"github.com/rwese/archivar/archivar/processor/processors/sanatizer"
+	"github.com/rwese/archivar/internal/file"
 	"github.com/sirupsen/logrus"
 )
 
 type Processor interface {
-	Process(filename *string, filepath *string, data *io.Reader) error
+	Process(*file.File) error
 }
 
 func New(processorType string, config interface{}, logger *logrus.Logger) (processor Processor) {
@@ -37,11 +36,11 @@ type ProcessorArchiver struct {
 	processor Processor
 }
 
-func (f *ProcessorArchiver) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
-	err = f.processor.Process(&fileName, &fileDirectory, &fileHandle)
+func (f *ProcessorArchiver) Upload(file file.File) (err error) {
+	err = f.processor.Process(&file)
 	if err != nil {
 		return err
 	}
 
-	return f.next.Upload(fileName, fileDirectory, fileHandle)
+	return f.next.Upload(file)
 }

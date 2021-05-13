@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Eun/gdriver"
+	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -24,9 +25,8 @@ type GoogleDrive struct {
 	token           *oauth2.Token
 }
 
-func New(config interface{}, logger *logrus.Logger) (gdrive *GoogleDrive) {
-	jsonM, _ := json.Marshal(config)
-	json.Unmarshal(jsonM, &gdrive)
+func New(c interface{}, logger *logrus.Logger) (gdrive *GoogleDrive) {
+	config.ConfigFromStruct(c, &gdrive)
 	return gdrive
 }
 

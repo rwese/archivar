@@ -1,9 +1,10 @@
 package filename
 
 import (
-	"encoding/json"
-	"io"
 	"regexp"
+
+	"github.com/rwese/archivar/internal/file"
+	"github.com/rwese/archivar/utils/config"
 
 	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/sirupsen/logrus"
@@ -20,11 +21,9 @@ type Filename struct {
 	logger *logrus.Logger
 }
 
-func New(config interface{}, logger *logrus.Logger) *Filename {
-	jsonM, _ := json.Marshal(config)
+func New(c interface{}, logger *logrus.Logger) *Filename {
 	var fc FilenameConfig
-	json.Unmarshal(jsonM, &fc)
-
+	config.ConfigFromStruct(c, &fc)
 	f := &Filename{
 		logger: logger,
 	}
@@ -44,20 +43,21 @@ func New(config interface{}, logger *logrus.Logger) *Filename {
 	return f
 }
 
-func (f *Filename) Filter(filename *string, filepath *string, data *io.Reader) (filterResult.Results, error) {
-	for _, allow := range f.allow {
-		if allow.Match([]byte(*filename)) {
-			f.logger.Debugf("Allow %s", *filename)
+func (filename *Filename) Filter(f *file.File) (filterResult.Results, error) {
+	for _, allow := range filename.allow {
+		if allow.Match([]byte(f.Filename)) {
+			filename.logger.Debugf("Filename: Allow %s", f.Filename)
 			return filterResult.Allow, nil
 		}
 	}
 
-	for _, reject := range f.reject {
-		if reject.Match([]byte(*filename)) {
-			f.logger.Debugf("Reject %s", *filename)
+	for _, reject := range filename.reject {
+		if reject.Match([]byte(f.Filename)) {
+			filename.logger.Debugf("Filename: Reject %s", f.Filename)
 			return filterResult.Reject, nil
 		}
 	}
 
+	filename.logger.Debugf("Filename: Miss %s", f.Filename)
 	return filterResult.Miss, nil
 }

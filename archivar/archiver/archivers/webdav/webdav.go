@@ -1,11 +1,11 @@
 package webdav
 
 import (
-	"encoding/json"
-	"io"
 	"path"
 
+	"github.com/rwese/archivar/internal/file"
 	webdavClient "github.com/rwese/archivar/internal/webdav"
+	"github.com/rwese/archivar/utils/config"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,20 +18,19 @@ type Webdav struct {
 }
 
 // New will return a new webdav uploader
-func New(config interface{}, logger *logrus.Logger) (webdav *Webdav) {
-	jsonM, _ := json.Marshal(config)
-	json.Unmarshal(jsonM, &webdav)
-	webdav.client = webdavClient.New(config, logger)
+func New(c interface{}, logger *logrus.Logger) (webdav *Webdav) {
+	config.ConfigFromStruct(c, &webdav)
+	webdav.client = webdavClient.New(c, logger)
 	return webdav
 }
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
-func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
+func (w *Webdav) Upload(f file.File) (err error) {
 	_, err = w.client.Connect()
 	if err != nil {
 		return
 	}
 
-	uploadFilePath := path.Join(w.UploadDirectory, fileDirectory)
-	return w.client.Upload(fileName, uploadFilePath, fileHandle)
+	uploadFilePath := path.Join(w.UploadDirectory, f.Filename)
+	return w.client.Upload(f.Filename, uploadFilePath, f.Body)
 }
