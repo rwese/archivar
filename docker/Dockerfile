@@ -1,3 +1,22 @@
+# Run tests in its own stage
+FROM golang:alpine AS tester
+
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /build
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+COPY . .
+
+RUN echo "Running tests..."
+RUN go test ./...
+
+# Run build in a clean stage
 FROM golang:alpine AS builder
 
 RUN apk --no-cache add ca-certificates
@@ -13,7 +32,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-
+RUN go test ./...
 RUN go build -o app ./cmd/archivar/
 
 # Move to /dist directory as the place for resulting binary folder
