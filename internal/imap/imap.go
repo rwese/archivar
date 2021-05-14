@@ -123,6 +123,7 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archiver.UploadFunc) error
 				Directory: filePrefixPath,
 				Body:      p.Body,
 			}
+
 			// files = append(files, &file)
 			if err = upload(file); err != nil {
 				return err

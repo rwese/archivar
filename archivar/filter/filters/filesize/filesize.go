@@ -2,6 +2,7 @@ package filesize
 
 import (
 	"bytes"
+	"errors"
 	"io"
 
 	"github.com/rwese/archivar/archivar/filter/filterResult"
@@ -11,13 +12,13 @@ import (
 )
 
 type FilesizeConfig struct {
-	MinSizeBytes int
-	MaxSizeBytes int
+	MinSizeBytes int64
+	MaxSizeBytes int64
 }
 
 type Filesize struct {
-	MinSizeBytes int
-	MaxSizeBytes int
+	MinSizeBytes int64
+	MaxSizeBytes int64
 	logger       *logrus.Logger
 }
 
@@ -39,27 +40,26 @@ func New(c interface{}, logger *logrus.Logger) *Filesize {
 }
 
 func (f *Filesize) Filter(file *file.File) (result filterResult.Results, err error) {
+	var buffer bytes.Buffer
+	var fileSize int64
+	sizeReader := io.MultiWriter(&buffer)
 	if f.MaxSizeBytes > 0 {
-		file.Body = io.LimitReader(file.Body, int64(f.MaxSizeBytes)+1)
+		fileSize, err = io.CopyN(sizeReader, file.Body, f.MaxSizeBytes+1)
+		if fileSize >= f.MaxSizeBytes && !errors.Is(err, io.EOF) {
+			f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", file.Filename)
+			return filterResult.Reject, nil
+		}
+	} else {
+		fileSize, err = io.Copy(sizeReader, file.Body)
 	}
 
-	r, err := io.ReadAll(file.Body)
-	if err != nil {
-		return filterResult.Allow, err
-	}
-
-	fileSize := len(r)
-	file.Body = bytes.NewReader(r)
-
-	if f.MaxSizeBytes > 0 && fileSize > f.MaxSizeBytes {
-		f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", file.Filename)
-		result = filterResult.Reject
-	} else if f.MinSizeBytes > 0 && fileSize < f.MinSizeBytes {
+	if f.MinSizeBytes >= 0 && fileSize < f.MinSizeBytes {
 		f.logger.Debugf("Filesize: Reject MinSizeBytes %s", file.Filename)
 		result = filterResult.Reject
 	} else {
 		f.logger.Debugf("Filesize: Fallthrough %s", file.Filename)
 		result = filterResult.Allow
+		file.Body = bytes.NewReader(buffer.Bytes())
 	}
 
 	return

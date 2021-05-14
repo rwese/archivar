@@ -31,6 +31,6 @@ func (w *Webdav) Upload(f file.File) (err error) {
 		return
 	}
 
-	uploadFilePath := path.Join(w.UploadDirectory, f.Filename)
+	uploadFilePath := path.Join(w.UploadDirectory, f.Directory)
 	return w.client.Upload(f.Filename, uploadFilePath, f.Body)
 }

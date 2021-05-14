@@ -32,5 +32,16 @@
                  "--config", "../../etc/gdrive.yaml",
                 ]
         },
+        {
+            "name": "cmd imap",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/archivar/",
+            "envFile": "${workspaceFolder}/.env",
+            "args": ["-", "imap", "inboxes", "ls",
+                "--config", "../../etc/archivar.yaml",
+            ]
+        },
     ]
 }
