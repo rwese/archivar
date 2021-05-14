@@ -18,10 +18,13 @@ type Webdav struct {
 }
 
 // New will return a new webdav uploader
-func New(c interface{}, logger *logrus.Logger) (webdav *Webdav) {
-	config.ConfigFromStruct(c, &webdav)
-	webdav.client = webdavClient.New(c, logger)
-	return webdav
+func New(c interface{}, logger *logrus.Logger) *Webdav {
+	w := &Webdav{
+		logger: logger,
+	}
+	config.ConfigFromStruct(c, &w)
+	w.client = webdavClient.New(c, logger)
+	return w
 }
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav

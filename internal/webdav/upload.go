@@ -11,6 +11,23 @@ import (
 	"time"
 )
 
+func (w *Webdav) createDirectoryIfNotExists(fileDirectory string) (err error) {
+	if !w.KnownDirectories[fileDirectory] {
+		w.logger.Debugf("fileDirectory will be: %s", fileDirectory)
+		_, err = w.Client.Stat(fileDirectory)
+		if err != nil {
+			err = w.Client.MkdirAll(fileDirectory, 0644)
+			if err != nil {
+				w.logger.Fatalf("failed to create uploadTargetFolder: %s", err.Error())
+				return
+			}
+		}
+		w.KnownDirectories[fileDirectory] = true
+	}
+
+	return
+}
+
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
 func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
 	newSession, err := w.Connect()
@@ -21,25 +38,14 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 	if newSession {
 		_, err = w.Client.Stat(fileDirectory)
 		if err != nil {
-			w.logger.Fatalf("failed to access upload directory: %s", err.Error())
+			w.logger.Fatalf("failed to access upload directory, which will not automatically created: %s", err.Error())
 		}
 	}
 
-	if !w.KnownUploadDirectories[fileDirectory] {
-		w.logger.Debugf("fileDirectory will be: %s", fileDirectory)
-		_, err = w.Client.Stat(fileDirectory)
-		if err != nil {
-			err = w.Client.MkdirAll(fileDirectory, 0644)
-			if err != nil {
-				w.logger.Fatalf("failed to create uploadTargetFolder: %s", err.Error())
-				return
-			}
-		}
-		w.KnownUploadDirectories[fileDirectory] = true
-	}
+	w.createDirectoryIfNotExists(fileDirectory)
 
 	uploadFileName := path.Join(fileDirectory, fileName)
-	w.logger.Debugf("uploading: %s", uploadFileName)
+	w.logger.Debugf("uploading to: %s", uploadFileName)
 
 	err = w.Client.WriteStream(uploadFileName, fileHandle, 0644)
 	if !w.isRetry && isConflictError(err) {
@@ -48,6 +54,7 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 		w.isRetry = true
 		return w.Upload(fileName, fileDirectory, fileHandle)
 	}
+
 	w.isRetry = false
 	return
 }

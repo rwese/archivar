@@ -7,21 +7,20 @@ import (
 )
 
 type Webdav struct {
-	Server                 string
-	UserName               string
-	Password               string
-	UploadDirectory        string
-	KnownUploadDirectories map[string]bool
-	isRetry                bool
-	logger                 *logrus.Logger
-	Client                 *gowebdav.Client
+	Server           string
+	UserName         string
+	Password         string
+	KnownDirectories map[string]bool // KnownDirectories improve speed by reducing repeated directory lookups
+	isRetry          bool
+	logger           *logrus.Logger
+	Client           *gowebdav.Client
 }
 
 // New will return a new webdav uploader
 func New(c interface{}, logger *logrus.Logger) *Webdav {
 	webdav := &Webdav{logger: logger}
 	config.ConfigFromStruct(c, &webdav)
-	webdav.KnownUploadDirectories = make(map[string]bool)
+	webdav.KnownDirectories = make(map[string]bool)
 	return webdav
 }
 
