@@ -10,15 +10,18 @@ type factory func(c interface{}, storage archivers.Archiver, logger *logrus.Logg
 
 var registered = make(map[string]factory)
 
+// Gatherer is used to download files and give them to their storage
 type Gatherer interface {
 	Download() error
 	Connect() (err error)
 }
 
+// Register a new gatherer
 func Register(p factory) {
 	registered[caller.FactoryPackage()] = p
 }
 
+// Get a gatherer from the registry
 func Get(n string, c interface{}, storage archivers.Archiver, logger *logrus.Logger) Gatherer {
 	p, exists := registered[n]
 	if !exists {

@@ -17,6 +17,7 @@ type Archivar struct {
 	config Config
 }
 
+// ConfigSub is used with an empty Interface to give to the respective package for reflection
 type ConfigSub struct {
 	Interval int
 	Type     string
@@ -50,28 +51,32 @@ func New(config Config, logger *logrus.Logger) Archivar {
 	return s
 }
 
-func (s *Archivar) addJob(jobName string, job job.JobConfig) {
+func (s *Archivar) addJob(jobName string, j job.JobConfig) {
 	interval := s.config.Settings.DefaultInterval
-	if job.Interval != 0 {
-		interval = job.Interval
+	if j.Interval != 0 {
+		interval = j.Interval
 	}
 
-	c := s.config.Archivers[job.Archiver]
+	c := s.config.Archivers[j.Archiver]
 	archiver := archiver.New(c.Type, c.Config, s.logger)
 
-	for _, processorName := range job.Processors {
+	for _, processorName := range j.Processors {
 		c = s.config.Processors[processorName]
 		p := processor.New(c.Type, c.Config, s.logger)
 		archiver = processorMiddleware.New(archiver, p)
 	}
 
-	for _, filterName := range job.Filters {
+	for _, filterName := range j.Filters {
 		c = s.config.Filters[filterName]
 		f := filter.New(c.Type, c.Config, s.logger)
 		archiver = filterMiddleware.New(archiver, f)
 	}
 
-	c = s.config.Gatherers[job.Gatherer]
+	c = s.config.Gatherers[j.Gatherer]
 	gatherer := gatherer.New(c.Type, c.Config, archiver, s.logger)
-	s.AddJob(jobName, interval, gatherer)
+	s.jobs = append(s.jobs, job.Job{
+		Name:     jobName,
+		Interval: interval,
+		Gatherer: gatherer,
+	})
 }

@@ -16,6 +16,7 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+// GoogleDrive allows to upload files to Google-Drive
 type GoogleDrive struct {
 	OAuthToken      string
 	ClientSecrets   string
@@ -30,6 +31,7 @@ func init() {
 	archivers.Register(New)
 }
 
+// New will return a new google_drive archivar
 func New(c interface{}, logger *logrus.Logger) (gdrive archivers.Archiver) {
 	config.ConfigFromStruct(c, &gdrive)
 	return gdrive

@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// New will return a new archiver backend based on the given typeName and config
 func New(typeName string, config interface{}, logger *logrus.Logger) (archiver archivers.Archiver) {
 	g := archivers.Get(typeName, config, logger)
 

@@ -17,7 +17,7 @@ type FilesizeConfig struct {
 	MaxSizeBytes int64
 }
 
-type Filesize struct {
+type filesize struct {
 	MinSizeBytes int64
 	MaxSizeBytes int64
 	logger       *logrus.Logger
@@ -35,7 +35,7 @@ func New(c interface{}, logger *logrus.Logger) filters.Filter {
 		logger.Fatalln("Filesize filter requires at least one MaxSizeBytes/MinSizeBytes")
 	}
 
-	f := &Filesize{
+	f := &filesize{
 		logger:       logger,
 		MaxSizeBytes: fc.MaxSizeBytes,
 		MinSizeBytes: fc.MinSizeBytes,
@@ -44,7 +44,7 @@ func New(c interface{}, logger *logrus.Logger) filters.Filter {
 	return f
 }
 
-func (f *Filesize) Filter(file *file.File) (result filterResult.Results, err error) {
+func (f *filesize) Filter(file *file.File) (result filterResult.Results, err error) {
 	var buffer bytes.Buffer
 	var fileSize int64
 	sizeReader := io.MultiWriter(&buffer)

@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// New will return a new processor based on the given typeName and config
 func New(processorType string, config interface{}, logger *logrus.Logger) processors.Processor {
 	p := processors.Get(processorType, config, logger)
 

@@ -7,17 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/rwese/archivar/archivar/job"
 )
-
-func (s *Archivar) AddJob(jobName string, interval int, gatherer gatherers.Gatherer) {
-	s.jobs = append(s.jobs, job.Job{
-		Name:     jobName,
-		Interval: interval,
-		Gatherer: gatherer,
-	})
-}
 
 func (s *Archivar) runJob(job job.Job, ctx context.Context, stop context.CancelFunc, wg *sync.WaitGroup) {
 	defer wg.Done()
