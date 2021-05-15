@@ -1,7 +1,7 @@
 package webdav
 
 import (
-	"github.com/rwese/archivar/utils/config"
+	"github.com/rwese/archivar/internal/utils/config"
 	"github.com/sirupsen/logrus"
 	"github.com/studio-b12/gowebdav"
 )

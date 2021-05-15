@@ -6,7 +6,7 @@ import (
 
 	"github.com/rwese/archivar/archivar/processor/processors"
 	"github.com/rwese/archivar/internal/file"
-	"github.com/rwese/archivar/utils/config"
+	"github.com/rwese/archivar/internal/utils/config"
 	"github.com/sirupsen/logrus"
 )
 

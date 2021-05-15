@@ -4,8 +4,8 @@ import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/rwese/archivar/internal/file"
+	"github.com/rwese/archivar/internal/utils/config"
 	webdavClient "github.com/rwese/archivar/internal/webdav"
-	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
 )
 

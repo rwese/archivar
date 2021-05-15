@@ -10,7 +10,7 @@ import (
 
 	"github.com/Eun/gdriver"
 	"github.com/rwese/archivar/archivar/archiver/archivers"
-	"github.com/rwese/archivar/utils/config"
+	"github.com/rwese/archivar/internal/utils/config"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

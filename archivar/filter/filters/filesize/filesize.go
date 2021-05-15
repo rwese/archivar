@@ -8,7 +8,7 @@ import (
 	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/rwese/archivar/archivar/filter/filters"
 	"github.com/rwese/archivar/internal/file"
-	"github.com/rwese/archivar/utils/config"
+	"github.com/rwese/archivar/internal/utils/config"
 	"github.com/sirupsen/logrus"
 )
 

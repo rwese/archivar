@@ -2,7 +2,7 @@ package gatherers
 
 import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
-	"github.com/rwese/archivar/utils/caller"
+	"github.com/rwese/archivar/internal/utils/caller"
 	"github.com/sirupsen/logrus"
 )
 

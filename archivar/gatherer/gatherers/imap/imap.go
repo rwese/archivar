@@ -2,7 +2,7 @@ package imap
 
 import (
 	imapClient "github.com/rwese/archivar/internal/imap"
-	"github.com/rwese/archivar/utils/config"
+	"github.com/rwese/archivar/internal/utils/config"
 
 	"github.com/emersion/go-imap"
 	"github.com/rwese/archivar/archivar/archiver/archivers"

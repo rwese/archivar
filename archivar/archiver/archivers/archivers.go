@@ -2,7 +2,7 @@ package archivers
 
 import (
 	"github.com/rwese/archivar/internal/file"
-	"github.com/rwese/archivar/utils/caller"
+	"github.com/rwese/archivar/internal/utils/caller"
 	"github.com/sirupsen/logrus"
 )
 
