@@ -3,9 +3,11 @@ package archivar
 import (
 	"github.com/rwese/archivar/archivar/archiver"
 	"github.com/rwese/archivar/archivar/filter"
+	filterMiddleware "github.com/rwese/archivar/archivar/filter/middleware"
 	"github.com/rwese/archivar/archivar/gatherer"
 	"github.com/rwese/archivar/archivar/job"
 	"github.com/rwese/archivar/archivar/processor"
+	processorMiddleware "github.com/rwese/archivar/archivar/processor/middleware"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,13 +62,13 @@ func (s *Archivar) addJob(jobName string, job job.JobsConfig) {
 	for _, processorName := range job.Processors {
 		c = s.config.Processors[processorName]
 		p := processor.New(c.Type, c.Config, s.logger)
-		archiver = processor.ProcessorArchiverMiddleware(archiver, p)
+		archiver = processorMiddleware.New(archiver, p)
 	}
 
 	for _, filterName := range job.Filters {
 		c = s.config.Filters[filterName]
 		f := filter.New(c.Type, c.Config, s.logger)
-		archiver = filter.FilterArchiverMiddleware(archiver, f)
+		archiver = filterMiddleware.New(archiver, f)
 	}
 
 	c = s.config.Gatherers[job.Gatherer]

@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/rwese/archivar/archivar/filter/filterResult"
+	"github.com/rwese/archivar/archivar/filter/filters"
 	"github.com/rwese/archivar/internal/file"
 	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
@@ -22,7 +23,11 @@ type Filesize struct {
 	logger       *logrus.Logger
 }
 
-func New(c interface{}, logger *logrus.Logger) *Filesize {
+func init() {
+	filters.Register(New)
+}
+
+func New(c interface{}, logger *logrus.Logger) filters.Filter {
 	var fc FilesizeConfig
 	config.ConfigFromStruct(c, &fc)
 

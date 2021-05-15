@@ -7,6 +7,7 @@ import (
 	"github.com/rwese/archivar/utils/config"
 
 	"github.com/rwese/archivar/archivar/filter/filterResult"
+	"github.com/rwese/archivar/archivar/filter/filters"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,7 +22,11 @@ type Filename struct {
 	logger *logrus.Logger
 }
 
-func New(c interface{}, logger *logrus.Logger) *Filename {
+func init() {
+	filters.Register(New)
+}
+
+func New(c interface{}, logger *logrus.Logger) filters.Filter {
 	var fc FilenameConfig
 	config.ConfigFromStruct(c, &fc)
 	f := &Filename{
