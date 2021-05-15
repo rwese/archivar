@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/rwese/archivar/archivar/processor/processors"
 	"github.com/rwese/archivar/internal/file"
 	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
@@ -20,7 +21,11 @@ type Sanatize struct {
 	characterReplaceRegexs []*regexp.Regexp
 }
 
-func New(c interface{}, logger *logrus.Logger) *Sanatize {
+func init() {
+	processors.Register(New)
+}
+
+func New(c interface{}, logger *logrus.Logger) processors.Processor {
 	var pc SanatizeConfig
 	config.ConfigFromStruct(c, &pc)
 
@@ -36,12 +41,12 @@ func New(c interface{}, logger *logrus.Logger) *Sanatize {
 	return f
 }
 
-func (f *Sanatize) Process(file *file.File) error {
+func (f Sanatize) Process(file *file.File) error {
 	file.Filename = f.sanatize(file.Filename)
 	return nil
 }
 
-func (f *Sanatize) sanatize(filename string) string {
+func (f Sanatize) sanatize(filename string) string {
 	if f.trimWhitespaces {
 		filename = strings.TrimSpace(filename)
 	}

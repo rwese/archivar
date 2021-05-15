@@ -3,6 +3,7 @@ package webdav
 import (
 	"path"
 
+	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/internal/file"
 	webdavClient "github.com/rwese/archivar/internal/webdav"
 	"github.com/rwese/archivar/utils/config"
@@ -17,8 +18,12 @@ type Webdav struct {
 	UploadDirectory string
 }
 
+func init() {
+	archivers.Register(New)
+}
+
 // New will return a new webdav uploader
-func New(c interface{}, logger *logrus.Logger) *Webdav {
+func New(c interface{}, logger *logrus.Logger) archivers.Archiver {
 	w := &Webdav{
 		logger: logger,
 	}

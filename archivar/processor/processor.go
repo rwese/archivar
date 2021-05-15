@@ -1,39 +1,32 @@
 package processor
 
 import (
-	"github.com/rwese/archivar/archivar/archiver"
-	"github.com/rwese/archivar/archivar/processor/processors/sanatizer"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
+	"github.com/rwese/archivar/archivar/processor/processors"
+	_ "github.com/rwese/archivar/archivar/processor/processors/sanatizer"
 	"github.com/rwese/archivar/internal/file"
 	"github.com/sirupsen/logrus"
 )
 
-type Processor interface {
-	Process(*file.File) error
-}
+func New(processorType string, config interface{}, logger *logrus.Logger) processors.Processor {
+	p := processors.Get(processorType, config, logger)
 
-func New(processorType string, config interface{}, logger *logrus.Logger) (processor Processor) {
-	switch processorType {
-	case "sanatize":
-		return sanatizer.New(
-			config,
-			logger,
-		)
-	default:
+	if p == nil {
 		logger.Panicf("could not create new processor '%s' from given config", processorType)
 	}
 
-	return nil
+	return p
 }
 
-func ProcessorArchiverMiddleware(next archiver.Archiver, processor Processor) archiver.Archiver {
+func ProcessorArchiverMiddleware(next archivers.Archiver, processor processors.Processor) archivers.Archiver {
 	fa := &ProcessorArchiver{next: next, processor: processor}
 	return fa
 }
 
 type ProcessorArchiver struct {
-	archiver.Archiver
-	next      archiver.Archiver
-	processor Processor
+	archivers.Archiver
+	next      archivers.Archiver
+	processor processors.Processor
 }
 
 func (f *ProcessorArchiver) Upload(file file.File) (err error) {

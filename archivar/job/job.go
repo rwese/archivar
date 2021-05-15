@@ -1,8 +1,8 @@
 package job
 
 import (
-	"github.com/rwese/archivar/archivar/archiver"
-	"github.com/rwese/archivar/archivar/gatherer"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
+	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,8 +10,8 @@ type Job struct {
 	Name     string
 	Interval int
 	Errors   int
-	Gatherer gatherer.Gatherer
-	Archiver archiver.Archiver
+	Gatherer gatherers.Gatherer
+	Archiver archivers.Archiver
 	Logger   *logrus.Logger
 }
 

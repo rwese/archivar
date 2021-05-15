@@ -21,7 +21,7 @@ Gatherers:
       # AllowInsecureSSL: False
 Processors:
   sanatizer:
-    Type: sanatize
+    Type: sanatizer
     Config:
       TrimWhitespaces: True
       # CharacterBlacklistRegexs:

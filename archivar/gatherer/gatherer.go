@@ -1,25 +1,20 @@
 package gatherer
 
 import (
-	"github.com/rwese/archivar/archivar/archiver"
-	"github.com/rwese/archivar/archivar/gatherer/gatherers/imap"
-	"github.com/rwese/archivar/archivar/gatherer/gatherers/webdav"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
+	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/sirupsen/logrus"
+
+	_ "github.com/rwese/archivar/archivar/gatherer/gatherers/imap"
+	_ "github.com/rwese/archivar/archivar/gatherer/gatherers/webdav"
 )
 
-type Gatherer interface {
-	Download() error
-}
+func New(typeName string, config interface{}, archivar archivers.Archiver, logger *logrus.Logger) gatherers.Gatherer {
+	g := gatherers.Get(typeName, config, archivar, logger)
 
-func New(gathererType string, config interface{}, archivar archiver.Archiver, logger *logrus.Logger) Gatherer {
-	switch gathererType {
-	case "imap":
-		return imap.New(config, archivar, logger)
-	case "webdav":
-		return webdav.New(config, archivar, logger)
-	default:
-		logger.Panicf("could not create new gatherer '%s' from given config", gathererType)
+	if g == nil {
+		logger.Panicf("could not create new gatherer '%s' from given config", typeName)
 	}
 
-	return nil
+	return g
 }

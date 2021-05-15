@@ -13,7 +13,7 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message/mail"
-	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/internal/file"
 	"github.com/sirupsen/logrus"
 )
@@ -24,14 +24,14 @@ type Imap struct {
 	Password         string
 	Inbox            string
 	AllowInsecureSSL bool
-	storage          archiver.Archiver
+	storage          archivers.Archiver
 	client           *client.Client
 	section          *imap.BodySectionName
 	items            []imap.FetchItem
 	logger           *logrus.Logger
 }
 
-func New(c interface{}, storage archiver.Archiver, logger *logrus.Logger) *Imap {
+func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) *Imap {
 	i := &Imap{
 		storage: storage,
 		logger:  logger,
@@ -64,7 +64,7 @@ func (i *Imap) Disconnect() (err error) {
 	return i.client.Logout()
 }
 
-func (i Imap) ProcessMessage(msg imap.Message, upload archiver.UploadFunc) error {
+func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) error {
 	r := msg.GetBody(i.section)
 
 	m, err := mail.CreateReader(r)
@@ -212,8 +212,9 @@ func (i *Imap) GetMessages(messages chan *imap.Message, done chan error, deleteD
 
 	mbox, err := i.client.Select(i.Inbox, false)
 	if err != nil {
-		i.logger.Fatal(err)
+		return
 	}
+
 	i.logger.Debugf("selected '%s'", i.Inbox)
 
 	criteria := imap.NewSearchCriteria()

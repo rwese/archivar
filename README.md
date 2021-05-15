@@ -10,15 +10,15 @@ working with GO and tinker around.
 ## DIAGRAM
 
 ```
-┌─────────────┐  ┌──────────────┐  ┌────────────┐  ┌────────────┐
-│ GATHERER    │  │ FILTERS      │  │ PROCESSOR  │  │ ARCHIVER   │
-│ │           │  │ │            │  │ │          │  │ │          │
-│ └►IMAP      ├─►│ │►Filename   ├─►│ └►SANATIZE ├─►│ │►WEBDAV   │
-│             │  │ └►Filesize   │  │            │  │ └►GDRIVE   │
-│             │  │              │  │            │  │            │
-└─────────────┘  └───┬──────────┤  └─┬──────────┤  └────────────┘
-                     │ FILTER   │    │ PROCESS  │
-                     │ │        │    └──────────┘
+┌─────────────┐  ┌──────────────┐  ┌─────────────┐  ┌────────────┐
+│ GATHERER    │  │ FILTERS      │  │ PROCESSOR   │  │ ARCHIVER   │
+│ │           │  │ │            │  │ │           │  │ │          │
+│ └►IMAP      ├─►│ │►Filename   ├─►│ └►SANATIZER ├─►│ │►WEBDAV   │
+│             │  │ └►Filesize   │  │             │  │ └►GDRIVE   │
+│             │  │              │  │             │  │            │
+└─────────────┘  └───┬──────────┤  └─┬───────────┤  └────────────┘
+                     │ FILTER   │    │ PROCESS   │
+                     │ │        │    └───────────┘
                      │ │►ACCEPT │
                      │ │►REJECT │
                      │ └►MISS   │
@@ -32,8 +32,13 @@ working with GO and tinker around.
   - [ ] Solution to remember already archived things
   - [ ] How to handle Processors adding files
   - [ ] Tests now that things shape up
+    - [ ] Archiver
+    - [x] Filters
+    - [ ] Gatherer
+    - [x] Processors
   - [ ] Prometheus Instrumenting
   - [ ] More docs
+  - [x] Use Factories to reduce "new" logic
   - [x] Middleware-like for Processors and Filters
   - [x] Use Github-Actions
   - [x] Use Github-Packages for DockerImages
@@ -62,6 +67,6 @@ working with GO and tinker around.
   - [ ] Image (Size, Dpi)
 - [x] cleanup logging
   - [x] properly apply log levels to output
-- [x] deamonize
+- [x] deamonize - let's call it "daemonized"
   - [x] graceful shutdown
 - [x] global service structgen to hold logger and other global stuff

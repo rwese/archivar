@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/archivar/filter/filterResult"
 	"github.com/rwese/archivar/archivar/filter/filters/filename"
 	"github.com/rwese/archivar/archivar/filter/filters/filesize"
@@ -32,14 +32,14 @@ func New(filterType string, config interface{}, logger *logrus.Logger) (filter F
 	return nil
 }
 
-func FilterArchiverMiddleware(next archiver.Archiver, filter Filter) archiver.Archiver {
+func FilterArchiverMiddleware(next archivers.Archiver, filter Filter) archivers.Archiver {
 	fa := &FilterArchiver{next: next, filter: filter}
 	return fa
 }
 
 type FilterArchiver struct {
-	archiver.Archiver
-	next   archiver.Archiver
+	archivers.Archiver
+	next   archivers.Archiver
 	filter Filter
 }
 

@@ -1,7 +1,8 @@
 package webdav
 
 import (
-	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
+	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/rwese/archivar/internal/file"
 	webdavClient "github.com/rwese/archivar/internal/webdav"
 	"github.com/rwese/archivar/utils/config"
@@ -10,13 +11,17 @@ import (
 
 // Webdav allows to upload files to a remote webdav server
 type Webdav struct {
-	storage archiver.Archiver
+	storage archivers.Archiver
 	logger  *logrus.Logger
 	client  *webdavClient.Webdav
 }
 
+func init() {
+	gatherers.Register(New)
+}
+
 // New will return a new webdav downloader
-func New(c interface{}, storage archiver.Archiver, logger *logrus.Logger) *Webdav {
+func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) gatherers.Gatherer {
 	webdav := &Webdav{
 		storage: storage,
 		logger:  logger,
@@ -26,7 +31,7 @@ func New(c interface{}, storage archiver.Archiver, logger *logrus.Logger) *Webda
 	return webdav
 }
 
-func (w *Webdav) Download() (err error) {
+func (w Webdav) Download() (err error) {
 	files := make(chan file.File)
 	if err = w.client.DownloadFiles("", files); err != nil {
 		return

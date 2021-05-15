@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Eun/gdriver"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/utils/config"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -25,7 +26,11 @@ type GoogleDrive struct {
 	token           *oauth2.Token
 }
 
-func New(c interface{}, logger *logrus.Logger) (gdrive *GoogleDrive) {
+func init() {
+	archivers.Register(New)
+}
+
+func New(c interface{}, logger *logrus.Logger) (gdrive archivers.Archiver) {
 	config.ConfigFromStruct(c, &gdrive)
 	return gdrive
 }

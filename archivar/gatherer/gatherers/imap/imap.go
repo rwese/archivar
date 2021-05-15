@@ -5,18 +5,23 @@ import (
 	"github.com/rwese/archivar/utils/config"
 
 	"github.com/emersion/go-imap"
-	"github.com/rwese/archivar/archivar/archiver"
+	"github.com/rwese/archivar/archivar/archiver/archivers"
+	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/sirupsen/logrus"
 )
 
 type Imap struct {
 	DeleteDownloaded bool
-	storage          archiver.Archiver
+	storage          archivers.Archiver
 	client           *imapClient.Imap
 	logger           *logrus.Logger
 }
 
-func New(c interface{}, storage archiver.Archiver, logger *logrus.Logger) (i *Imap) {
+func init() {
+	gatherers.Register(New)
+}
+
+func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) (i gatherers.Gatherer) {
 	config.ConfigFromStruct(c, &i)
 
 	return &Imap{
