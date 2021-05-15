@@ -14,6 +14,7 @@ type UploadFunc func(file.File) (err error)
 
 type Archiver interface {
 	Upload(file.File) (err error)
+	Connect() (err error)
 }
 
 func Register(p factory) {

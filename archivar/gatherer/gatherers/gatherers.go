@@ -12,6 +12,7 @@ var registered = make(map[string]factory)
 
 type Gatherer interface {
 	Download() error
+	Connect() (err error)
 }
 
 func Register(p factory) {

@@ -25,3 +25,7 @@ func (f *processorArchiver) Upload(file file.File) (err error) {
 
 	return f.next.Upload(file)
 }
+
+func (f *processorArchiver) Connect() (err error) {
+	return f.next.Connect()
+}

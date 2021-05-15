@@ -32,6 +32,10 @@ func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) gathe
 }
 
 func (w Webdav) Download() (err error) {
+	if err = w.Connect(); err != nil {
+		return
+	}
+
 	files := make(chan file.File)
 	if err = w.client.DownloadFiles("", files); err != nil {
 		return
@@ -42,4 +46,12 @@ func (w Webdav) Download() (err error) {
 	}
 
 	return
+}
+
+func (w *Webdav) Connect() (err error) {
+	if err = w.storage.Connect(); err != nil {
+		return
+	}
+
+	return w.client.Connect()
 }

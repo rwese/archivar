@@ -30,16 +30,17 @@ func (w *Webdav) createDirectoryIfNotExists(fileDirectory string) (err error) {
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
 func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Reader) (err error) {
-	newSession, err := w.Connect()
-	if err != nil {
+	if err = w.Connect(); err != nil {
 		return
 	}
 
-	if newSession {
+	if w.newSession {
+		w.newSession = false
 		_, err = w.Client.Stat(fileDirectory)
 		if err != nil {
 			w.logger.Fatalf("failed to access upload directory, which will not automatically created: %s", err.Error())
 		}
+
 	}
 
 	w.createDirectoryIfNotExists(fileDirectory)

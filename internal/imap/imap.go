@@ -46,6 +46,13 @@ func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) *Imap
 }
 
 func (i *Imap) Connect() (err error) {
+	if i.client != nil {
+		state := i.client.State()
+		if state == imap.AuthenticatedState || state == imap.SelectedState {
+			return
+		}
+	}
+
 	tlsConfig := tls.Config{InsecureSkipVerify: i.AllowInsecureSSL}
 	i.logger.Debugf("connecting to %s", i.Server)
 	i.client, err = client.DialTLS(i.Server, &tlsConfig)
@@ -124,7 +131,6 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 				Body:      p.Body,
 			}
 
-			// files = append(files, &file)
 			if err = upload(file); err != nil {
 				return err
 			}
@@ -137,9 +143,6 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 			logrus.Debugf("Got attachment: %v", filename)
 			logrus.Debugf("Saving as: %v", filePrefixPath)
 
-			// fileCh <-
-			// body, _ := io.ReadAll(p.Body)
-			// fmt.Print(len(body))
 			file := file.File{
 				Filename:  filename,
 				Directory: filePrefixPath,
@@ -149,10 +152,6 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 			if err = upload(file); err != nil {
 				return err
 			}
-			// files = append(files, &file)
-			// if err = i.storage.Upload(file); err != nil {
-			// 	return err
-			// }
 		}
 	}
 	return nil

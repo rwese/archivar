@@ -26,6 +26,11 @@ func (s *Archivar) runJob(job job.Job, ctx context.Context, stop context.CancelF
 	waitingTime := time.Duration(job.Interval) * time.Second
 	schedule := time.After(time.Second * 0)
 
+	if err := job.Connect(); err != nil {
+		s.logger.Warnf("%s: error %s", job.Name, err.Error())
+		stop()
+	}
+
 	for {
 		select {
 		case <-ctx.Done():

@@ -43,7 +43,6 @@ func (i Imap) Download() (err error) {
 	}
 
 	readMsgSeq := new(imap.SeqSet)
-	// readMsgSeq := new(imap.SeqSet)
 	for msg := range messages {
 		err := i.client.ProcessMessage(*msg, i.storage.Upload)
 		if err != nil {
@@ -63,4 +62,12 @@ func (i Imap) Download() (err error) {
 	}
 	i.logger.Debug("processing imap storage done!")
 	return
+}
+
+func (i *Imap) Connect() (err error) {
+	if err = i.storage.Connect(); err != nil {
+		return
+	}
+
+	return i.client.Connect()
 }

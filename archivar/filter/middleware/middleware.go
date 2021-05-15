@@ -30,3 +30,7 @@ func (f *filterArchiver) Upload(file file.File) (err error) {
 
 	return f.next.Upload(file)
 }
+
+func (f *filterArchiver) Connect() (err error) {
+	return f.next.Connect()
+}

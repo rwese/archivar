@@ -34,11 +34,14 @@ func New(c interface{}, logger *logrus.Logger) archivers.Archiver {
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
 func (w *Webdav) Upload(f file.File) (err error) {
-	_, err = w.client.Connect()
-	if err != nil {
+	if err = w.Connect(); err != nil {
 		return
 	}
 
 	uploadFilePath := path.Join(w.UploadDirectory, f.Directory)
 	return w.client.Upload(f.Filename, uploadFilePath, f.Body)
+}
+
+func (w *Webdav) Connect() (err error) {
+	return w.client.Connect()
 }

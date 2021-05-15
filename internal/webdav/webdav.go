@@ -12,20 +12,21 @@ type Webdav struct {
 	Password         string
 	KnownDirectories map[string]bool // KnownDirectories improve speed by reducing repeated directory lookups
 	isRetry          bool
+	newSession       bool
 	logger           *logrus.Logger
 	Client           *gowebdav.Client
 }
 
 // New will return a new webdav uploader
 func New(c interface{}, logger *logrus.Logger) *Webdav {
-	webdav := &Webdav{logger: logger}
+	webdav := &Webdav{logger: logger, newSession: true}
 	config.ConfigFromStruct(c, &webdav)
 	webdav.KnownDirectories = make(map[string]bool)
 	return webdav
 }
 
-func (w *Webdav) Connect() (newSession bool, err error) {
-	if newSession = w.Client == nil; !newSession {
+func (w *Webdav) Connect() (err error) {
+	if w.Client != nil {
 		return
 	}
 
