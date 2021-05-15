@@ -48,4 +48,4 @@ COPY --from=builder /dist/app /
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Command to run
-ENTRYPOINT ["/app", "watch"]
+ENTRYPOINT ["/app", "-c", "/etc/go-archivar/archivar.yaml", "watch"]
