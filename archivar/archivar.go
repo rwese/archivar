@@ -34,7 +34,7 @@ type Config struct {
 	Gatherers  map[string]ConfigSub
 	Filters    map[string]ConfigSub
 	Processors map[string]ConfigSub
-	Jobs       map[string]job.JobsConfig
+	Jobs       map[string]job.JobConfig
 }
 
 func New(config Config, logger *logrus.Logger) Archivar {
@@ -50,7 +50,7 @@ func New(config Config, logger *logrus.Logger) Archivar {
 	return s
 }
 
-func (s *Archivar) addJob(jobName string, job job.JobsConfig) {
+func (s *Archivar) addJob(jobName string, job job.JobConfig) {
 	interval := s.config.Settings.DefaultInterval
 	if job.Interval != 0 {
 		interval = job.Interval

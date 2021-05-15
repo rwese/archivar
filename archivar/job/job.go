@@ -27,7 +27,7 @@ func (j *Job) Connect() (err error) {
 	return
 }
 
-type JobsConfig struct {
+type JobConfig struct {
 	Interval   int
 	Gatherer   string
 	Archiver   string
