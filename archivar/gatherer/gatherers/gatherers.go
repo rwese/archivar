@@ -6,15 +6,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Factory func(c interface{}, storage archivers.Archiver, logger *logrus.Logger) Gatherer
+type factory func(c interface{}, storage archivers.Archiver, logger *logrus.Logger) Gatherer
 
-var registered = make(map[string]Factory)
+var registered = make(map[string]factory)
 
 type Gatherer interface {
 	Download() error
 }
 
-func Register(p Factory) {
+func Register(p factory) {
 	registered[caller.FactoryPackage()] = p
 }
 

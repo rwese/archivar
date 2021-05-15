@@ -8,17 +8,17 @@ import (
 )
 
 func New(next archivers.Archiver, filter filters.Filter) archivers.Archiver {
-	fa := &FilterArchiver{next: next, filter: filter}
+	fa := &filterArchiver{next: next, filter: filter}
 	return fa
 }
 
-type FilterArchiver struct {
+type filterArchiver struct {
 	archivers.Archiver
 	next   archivers.Archiver
 	filter filters.Filter
 }
 
-func (f *FilterArchiver) Upload(file file.File) (err error) {
+func (f *filterArchiver) Upload(file file.File) (err error) {
 	result, err := f.filter.Filter(&file)
 	if err != nil {
 		return err

@@ -7,17 +7,17 @@ import (
 )
 
 func New(next archivers.Archiver, processor processors.Processor) archivers.Archiver {
-	fa := &ProcessorArchiver{next: next, processor: processor}
+	fa := &processorArchiver{next: next, processor: processor}
 	return fa
 }
 
-type ProcessorArchiver struct {
+type processorArchiver struct {
 	archivers.Archiver
 	next      archivers.Archiver
 	processor processors.Processor
 }
 
-func (f *ProcessorArchiver) Upload(file file.File) (err error) {
+func (f *processorArchiver) Upload(file file.File) (err error) {
 	err = f.processor.Process(&file)
 	if err != nil {
 		return err

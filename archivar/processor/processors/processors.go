@@ -6,15 +6,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Factory func(c interface{}, logger *logrus.Logger) Processor
+type factory func(c interface{}, logger *logrus.Logger) Processor
 
-var registered = make(map[string]Factory)
+var registered = make(map[string]factory)
 
 type Processor interface {
 	Process(*file.File) error
 }
 
-func Register(p Factory) {
+func Register(p factory) {
 	registered[caller.FactoryPackage()] = p
 }
 

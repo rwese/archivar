@@ -6,9 +6,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Factory func(c interface{}, logger *logrus.Logger) Archiver
+type factory func(c interface{}, logger *logrus.Logger) Archiver
 
-var registered = make(map[string]Factory)
+var registered = make(map[string]factory)
 
 type UploadFunc func(file.File) (err error)
 
@@ -16,7 +16,7 @@ type Archiver interface {
 	Upload(file.File) (err error)
 }
 
-func Register(p Factory) {
+func Register(p factory) {
 	registered[caller.FactoryPackage()] = p
 }
 
