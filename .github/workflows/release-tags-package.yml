@@ -1,0 +1,29 @@
+name: Publish New Tag Packages
+on:
+  push:
+    tags:
+      - "**"
+
+jobs:
+  build-and-publish-release:
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get tag name
+        id: get_tag_name
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - uses: actions/checkout@v1
+        with:
+          ref: ${{ steps.get_tag_name.outputs.VERSION }}
+
+      - name: Build and Publish latest Release
+        uses: VaultVulp/gp-docker-action@1.1.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: archivar
+          image-tag: ${{ steps.get_tag_name.outputs.VERSION }}
+          dockerfile: docker/Dockerfile
+          build-context: .
