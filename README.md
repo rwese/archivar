@@ -28,6 +28,47 @@ working with GO and tinker around.
                      └──────────┘
 ```
 
+## Example
+
+See `etc/archivar.yaml.dist` for a full example.
+
+Minimal example config
+
+```yaml
+# etc/archivar.yaml
+Jobs:
+  imap_to_webdav:
+Gatherers:
+  imap_mail_account:
+    Type: imap
+    Config:
+      Server: server:993
+      Username:
+      Password:
+      # DeleteDownloaded: False
+Archivers:
+  webdav_nextcloud:
+    Type: webdav
+    Config:
+      Username:
+      Password:
+      Server: https://server/remote.php/dav/files/username/
+      UploadDirectory: /upload/
+```
+
+```yaml
+# docker-compose.yml
+# with bind-mount
+version: "2.3"
+
+services:
+  archivar:
+    image: docker.pkg.github.com/rwese/archivar/archivar
+    restart: unless-stopped
+    volumes:
+      - "./etc:/etc/go-archivar"
+```
+
 ## TODO
 
 - General
@@ -72,3 +113,116 @@ working with GO and tinker around.
 - [x] deamonize - let's call it "daemonized"
   - [x] graceful shutdown
 - [x] global service structgen to hold logger and other global stuff
+
+## Jobs
+
+### Definition
+
+Each job consists of `1:Gatherer -> [x:Filters -> x:Processors] -> 1:Archiver`
+
+```yaml
+Jobs:
+  imap_to_webdav:
+    Interval: 600
+    Gatherer: imap_mail_account
+    Archiver: webdav_nextcloud
+    Filters:
+      - pdf_only
+      - filesize_filter
+    Processors:
+      - only_nice_chars_and_trim
+```
+
+## Gatherers
+
+### IMAP
+
+```yaml
+Gatherers:
+  <gatherer_name>:
+    Type: imap
+    Config:
+      Server: server:993
+      Username:
+      Password:
+      # DeleteDownloaded: False
+      # AllowInsecureSSL: False
+```
+
+## Archivers
+
+### Webdav
+
+```yaml
+Archivers:
+  <archiver_name>:
+    Type: webdav
+    Config:
+      Username:
+      Password:
+      Server: https://server/remote.php/dav/files/username/
+      UploadDirectory: /upload/
+```
+
+## Filters
+
+Filters are used to filter files provided by the gatherer.
+
+Possible results:
+
+- Allow
+- Reject
+- Miss
+
+### Filesize
+
+Verify if file is at least `MinSizeBytes` and/or is below `MaxSizeBytes`.
+
+```yaml
+Filters:
+  min_1B_max_100MB:
+    Type: filesize
+        Config:
+          MinSizeBytes: 100
+          MaxSizeBytes: 100000000
+```
+
+### Filename
+
+Test the Filename against defined regex's.
+
+Tests are always Allow -> Reject -> Miss (Allow).
+
+- If you wish to not allow missed regex's have a . regex.
+- All regexes are partial by default if you wish full match use ^abcd$
+- Case-insensitive is (?i)
+
+```yaml
+Filters:
+  pdf_only:
+    Type: filename
+        Config:
+          Allow:
+            - (?i).pdf$
+          Reject:
+```
+
+## Processors
+
+### Sanatizer
+
+Is used to perform manipulation on the gathered files.
+
+```yaml
+Processors:
+  only_nice_chars_and_trim:
+    Type: sanatizer
+    Config:
+      TrimWhitespaces: True
+      CharacterBlacklistRegexs:
+        - "[^[:word:]-_. ]"
+```
+
+#### Notes
+
+- Golang Regexp uses [RE2, a regular expression library](https://github.com/google/re2/wiki/Syntax)
