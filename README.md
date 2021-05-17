@@ -1,3 +1,5 @@
+[![Publish Archivar Docker](https://github.com/rwese/archivar/actions/workflows/release-package.yml/badge.svg?branch=main&event=release)](https://github.com/rwese/archivar/actions/workflows/release-package.yml)
+
 # Archivar
 
 Is a small golang tool to archive/move resources from one location to another,
