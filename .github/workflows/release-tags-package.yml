@@ -1,0 +1,29 @@
+name: Publish New Tag Packages
+on:
+  push:
+    tags:
+      - "**"
+
+jobs:
+  build-and-publish-release:
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Extract tag name
+        id: tag
+        uses: actions/github-script@0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            return context.payload.ref.replace(/\/refs\/tags\//, '');
+
+      - name: Build and Publish latest Release
+        uses: VaultVulp/gp-docker-action@1.1.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: archivar
+          image-tag: ${{ steps.tag.outputs.result }}
+          dockerfile: docker/Dockerfile
+          build-context: .
