@@ -32,7 +32,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN go test ./...
+
 RUN go build -o app ./cmd/archivar/
 
 # Move to /dist directory as the place for resulting binary folder
