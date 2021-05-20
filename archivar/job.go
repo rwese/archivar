@@ -50,7 +50,7 @@ func (s *Archivar) runJob(job job.Job, ctx context.Context, stop context.CancelF
 	s.logger.Debugf("%s: ended", job.Name)
 }
 
-func (s *Archivar) RunJobs(pollingInterval int) {
+func (s *Archivar) RunJobs() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	wg := new(sync.WaitGroup)

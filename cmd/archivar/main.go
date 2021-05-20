@@ -34,7 +34,7 @@ and running the archivers until receiving an interrupt signal.`,
 		defaultJobInterval, _ := cmd.Flags().GetInt("interval")
 		logger.Debugf("running watch with default interval: %d", defaultJobInterval)
 		svc := setupArchivarSvc(cmd, args)
-		svc.RunJobs(defaultJobInterval)
+		svc.RunJobs()
 	},
 }
 
