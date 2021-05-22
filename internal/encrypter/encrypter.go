@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -35,6 +36,30 @@ type Encrypter struct {
 
 func New(publicKey *rsa.PublicKey, privateKey *rsa.PrivateKey) Encrypter {
 	return Encrypter{publicKey: publicKey, privateKey: privateKey}
+}
+
+func (e Encrypter) SplitFile(src string) (err error) {
+	input, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	passphraseEncrypted := input[:128]
+	data := input[128:]
+
+	dstKeyFile := src + ".rsa.key"
+	dstDataFile := src + ".aes.body"
+	if err = os.WriteFile(dstKeyFile, passphraseEncrypted, 0660); err != nil {
+		return
+	}
+
+	fmt.Printf("write encrypted key to: %s\n", dstKeyFile)
+
+	err = os.WriteFile(dstDataFile, data, 0660)
+
+	fmt.Printf("write encrypted data to: %s\n", dstDataFile)
+
+	return
 }
 
 func (e Encrypter) DecryptFile(src, dst string) (err error) {
@@ -76,7 +101,7 @@ func (e Encrypter) Encrypt(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	encryptedEncryptionKey = []byte(removeBase64Padding(base64.URLEncoding.EncodeToString(encryptedEncryptionKey)))
 	joinedOutput := bytes.Join(
 		[][]byte{
 			encryptedEncryptionKey,
@@ -89,8 +114,13 @@ func (e Encrypter) Encrypt(data []byte) ([]byte, error) {
 }
 
 func (e Encrypter) Decrypt(data []byte) ([]byte, error) {
-	passphraseEncrypted := data[:128]
-	data = data[128:]
+	passphraseEncrypted := data[:171]
+	passphraseEncrypted, err := base64.URLEncoding.DecodeString(addBase64Padding(string(passphraseEncrypted)))
+	if err != nil {
+		return nil, err
+	}
+
+	data = data[171:]
 	passphrase, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, e.privateKey, passphraseEncrypted, nil)
 	if err != nil {
 		return nil, err

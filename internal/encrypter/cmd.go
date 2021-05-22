@@ -43,6 +43,21 @@ var CmdEncrypterDecrypt = &cobra.Command{
 		}
 	},
 }
+var CmdEncrypterSplit = &cobra.Command{
+	Use:   "split",
+	Short: "split file into rsa-Key and aes-Body",
+	Long: `split will separate the rsa encrypted key from the aes encrypted
+	body. This will in theory allow you to separately decrypt the key to then
+	decrypt the body. Good luck.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		srcFile, _ := cmd.Flags().GetString("srcFile")
+
+		e := New(nil, nil)
+		if err := e.SplitFile(srcFile); err != nil {
+			panic(err)
+		}
+	},
+}
 
 var CmdEncrypter = &cobra.Command{
 	Use:   "encrypter",
@@ -52,6 +67,7 @@ var CmdEncrypter = &cobra.Command{
 func init() {
 	CmdEncrypterKeyGenerate.Flags().Int("keysize", 1024, "keysize in bits")
 	CmdEncrypterKey.AddCommand(CmdEncrypterKeyGenerate)
+	CmdEncrypter.AddCommand(CmdEncrypterKey)
 
 	CmdEncrypterDecrypt.Flags().String("privateKey", "", "Private key file")
 	CmdEncrypterDecrypt.Flags().String("srcFile", "", "file to decrypt")
@@ -61,5 +77,9 @@ func init() {
 	CmdEncrypterDecrypt.MarkFlagRequired("destFile")
 	CmdEncrypter.AddCommand(CmdEncrypterDecrypt)
 
-	CmdEncrypter.AddCommand(CmdEncrypterKey)
+	CmdEncrypterSplit.Flags().String("srcFile", "", "file to Split")
+	CmdEncrypterSplit.MarkFlagRequired("srcFile")
+
+	CmdEncrypter.AddCommand(CmdEncrypterSplit)
+
 }

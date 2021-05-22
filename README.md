@@ -72,6 +72,7 @@ services:
 ## TODO
 
 - General
+  - [ ] MUST find a better naming for ´/internal` packages, no named imports
   - [ ] Solution to remember already archived things
   - [ ] How to handle Processors adding files
   - [ ] Tests now that things shape up
@@ -81,6 +82,7 @@ services:
     - [x] Processors
   - [ ] Prometheus Instrumenting
   - [ ] More docs
+  - [x] added PublicKey for file encryption/decryption and key-generation
   - [x] Use Factories to reduce "new" logic
   - [x] Middleware-like for Processors and Filters
   - [x] Use Github-Actions
@@ -102,6 +104,8 @@ services:
   - [x] Google Drive
 - Processors
   - [x] Sanatizer (Filename)
+  - [x] Encryption
+    - [ ] Passphrase Support
   - [ ] OCR
   - [ ] Anti Virus (rly?)
 - Filters
@@ -211,7 +215,7 @@ Filters:
 
 ### Sanatizer
 
-Is used to perform manipulation on the gathered files.
+Is used to perform manipulation filenames on the gathered files.
 
 ```yaml
 Processors:
@@ -223,6 +227,48 @@ Processors:
         - "[^[:word:]-_. ]"
 ```
 
+### Encrypter
+
+Encrypter will encrypt, duh, files with the PublicKey given.
+
+The Process works using EncryptOAEP(RSA-OAEP) to encrypt the AES passphrase
+which is prepended to the encrypted fileBody both are then base64 encoded.
+
+For decryption you can use the cli command:
+
+```bash
+./archivar encrypter decrypt \
+--privateKey myKey.sec \
+--srcFile /archive/somefile.txt.encrypted \
+--destFile /archive/somefile.txt
+```
+
+I will work on the cli commands when the need arises, for now this works.
+
+Passphrase support is TODO.
+
+To split the encrypted-key from the encrypted-body you can use split:
+
+```bash
+./archivar encrypter split --srcFile /archive/somefile.txt.encrypted
+
+```
+
+```yaml
+Processors:
+  basic_encrypter:
+    Type: encrypter
+    Config:
+      AddExtension: .thisIsEncryptedForMe
+      DontRename: false # Default false
+      PublicKey: |
+        -----BEGIN RSA PUBLIC KEY-----
+        << Enter your public key to encrypt files for >>
+        -----END RSA PUBLIC KEY-----
+```
+
 #### Notes
 
-- Golang Regexp uses [RE2, a regular expression library](https://github.com/google/re2/wiki/Syntax)
+- Golang Regexp uses [RE2](https://github.com/google/re2/wiki/Syntax)
+- encryption snippets from @stupidbodo
+  https://gist.github.com/stupidbodo/601b68bfef3449d1b8d9*
