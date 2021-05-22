@@ -10,6 +10,10 @@ Archivers:
       Password:
       Server: https://server/remote.php/dav/files/username/
       UploadDirectory: /upload/
+  local_filesystem:
+    Type: filesystem
+    Config:
+      Directory: /home/user/archivar/
 Gatherers:
   imap_mail_account:
     Type: imap
