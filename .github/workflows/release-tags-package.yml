@@ -35,6 +35,7 @@ jobs:
           image-tag: ${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}.${{ steps.semver_parser.outputs.patch }}
           dockerfile: docker/Dockerfile
           build-context: .
+          pull-image: true
 
       - name: Build and Publish latest Release Minor
         uses: VaultVulp/gp-docker-action@1.1.8
