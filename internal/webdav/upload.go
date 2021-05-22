@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (w *Webdav) createDirectoryIfNotExists(fileDirectory string) (err error) {
+func (w *Webdav) MkdirAll(fileDirectory string) (err error) {
 	if !w.KnownDirectories[fileDirectory] {
 		w.logger.Debugf("fileDirectory will be: %s", fileDirectory)
 		_, err = w.Client.Stat(fileDirectory)
@@ -43,7 +43,7 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 
 	}
 
-	w.createDirectoryIfNotExists(fileDirectory)
+	w.MkdirAll(fileDirectory)
 
 	uploadFileName := path.Join(fileDirectory, fileName)
 	w.logger.Debugf("uploading to: %s", uploadFileName)

@@ -2,6 +2,7 @@ package archiver
 
 import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
+	_ "github.com/rwese/archivar/archivar/archiver/archivers/filesystem"
 	_ "github.com/rwese/archivar/archivar/archiver/archivers/google_drive"
 	_ "github.com/rwese/archivar/archivar/archiver/archivers/webdav"
 	"github.com/sirupsen/logrus"

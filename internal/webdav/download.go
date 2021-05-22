@@ -40,11 +40,11 @@ func (w *Webdav) DownloadFiles(directory string, fileCh chan file.File) (err err
 	return
 }
 
-func (w *Webdav) DeleteFile(file string) (err error) {
-	return w.Client.Remove(file)
+func (w *Webdav) DeleteFile(file file.File) (err error) {
+	return w.Client.Remove(file.Path())
 }
 
-func (w *Webdav) DeleteFiles(files []string) (err error) {
+func (w *Webdav) DeleteFiles(files []file.File) (err error) {
 	for _, file := range files {
 		if err = w.DeleteFile(file); err != nil {
 			return err
