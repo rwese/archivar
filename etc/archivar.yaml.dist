@@ -14,6 +14,28 @@ Archivers:
     Type: filesystem
     Config:
       Directory: /home/user/archivar/
+  google_drive:
+    Type: gdrive
+    OAuthToken: >
+      {
+        "access_token":"<your token here>",
+        "token_type":"Bearer",
+        "refresh_token":"<your refresh token here>",
+        "expiry":"some-date"
+      }
+    ClientSecrets: >
+      {"installed":
+        {
+          "client_id":"some_client_id",
+          "project_id":"archivar",
+          "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+          "token_uri":"https://oauth2.googleapis.com/token",
+          "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+          "client_secret":"some_client_secret",
+          "redirect_uris":["urn:ietf:wg:oauth:2.0:oob","http://localhost"]
+        }
+      }
+    UploadDirectory: /archivar/
 Gatherers:
   imap_mail_account:
     Type: imap

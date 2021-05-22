@@ -20,8 +20,8 @@ working with GO and tinker around.
 │             │  │              │  │             │  │            │
 └─────────────┘  └───┬──────────┤  └─┬───────────┤  └────────────┘
                      │ FILTER   │    │ PROCESS   │
-                     │ │        │    └───────────┘
-                     │ │►ACCEPT │
+                     │ │        │    │ ENCRYPTER │
+                     │ │►ACCEPT │    └───────────┘
                      │ │►REJECT │
                      │ └►MISS   │
                      │          │
@@ -63,7 +63,7 @@ version: "2.3"
 
 services:
   archivar:
-    image: docker.pkg.github.com/rwese/archivar/archivar
+    image: docker.pkg.github.com/rwese/archivar/archivar:latest
     restart: unless-stopped
     volumes:
       - "./etc:/etc/go-archivar"
@@ -154,6 +154,51 @@ Gatherers:
 ```
 
 ## Archivers
+
+### Filesystem
+
+Store files directly on the filesystem, write access required, works with
+nfs or similar.
+
+```yaml
+Archivers:
+  <archiver_name>:
+    Type: filesystem
+    Config:
+      Directory: /home/user/archivar/
+```
+
+### Google-Drive
+
+The setup of this archiver is a little complicated as it requires a client
+registration etc etc. I will extend the documentation when I get to it. (i try)
+
+```yaml
+Archivers:
+  <archiver_name>:
+  google_drive:
+    Type: gdrive
+    OAuthToken: >
+      {
+        "access_token":"<your token here>",
+        "token_type":"Bearer",
+        "refresh_token":"<your refresh token here>",
+        "expiry":"some-date"
+      }
+    ClientSecrets: >
+      {"installed":
+        {
+          "client_id":"some_client_id",
+          "project_id":"archivar",
+          "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+          "token_uri":"https://oauth2.googleapis.com/token",
+          "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+          "client_secret":"some_client_secret",
+          "redirect_uris":["urn:ietf:wg:oauth:2.0:oob","http://localhost"]
+        }
+      }
+    UploadDirectory: /archivar/
+```
 
 ### Webdav
 
