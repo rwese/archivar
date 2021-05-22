@@ -19,7 +19,17 @@ Gatherers:
       Password:
       # DeleteDownloaded: False
       # AllowInsecureSSL: False
-Processors:
+Processors:  
+  superSecretDataEncrypter:
+    Type: encrypter
+    Config:
+      AddExtension: .encrypted
+      DontRename: false
+      PublicKey: |
+        -----BEGIN RSA PUBLIC KEY-----
+        Generate this using ./archivar encrypter key generate
+        OR use 
+        -----END RSA PUBLIC KEY-----
   sanatizer:
     Type: sanatizer
     Config:
@@ -56,3 +66,4 @@ Jobs:
       - filesize_filter
     Processors:
       - sanatizer
+      - superSecretDataEncrypter

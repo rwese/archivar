@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/rwese/archivar/archivar"
+	encrypter "github.com/rwese/archivar/internal/encrypter"
 	_ "github.com/rwese/archivar/internal/imap"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -56,6 +57,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("profiler", false, "run go profiler server")
 	rootCmd.PersistentFlags().Int("profilerPort", DEFAULT_PROFILER_PORT, "run go profiler server")
 	rootCmd.AddCommand(cmdWatch)
+	rootCmd.AddCommand(encrypter.CmdEncrypter)
 }
 
 func setupArchivarSvc(cmd *cobra.Command, args []string) archivar.Archivar {
@@ -81,16 +83,16 @@ func setupArchivarSvc(cmd *cobra.Command, args []string) archivar.Archivar {
 		if trace {
 			logger.SetReportCaller(true)
 		}
-		logger.SetFormatter(&log.JSONFormatter{
-			// DisableColors: true,
-			// FullTimestamp: true,
-			FieldMap: log.FieldMap{
-				log.FieldKeyTime:  "@timestamp",
-				log.FieldKeyLevel: "@level",
-				log.FieldKeyMsg:   "@message",
-				log.FieldKeyFunc:  "@caller",
-			},
-		})
+		// logger.SetFormatter(&log.JSONFormatter{
+		// 	// DisableColors: true,
+		// 	// FullTimestamp: true,
+		// 	FieldMap: log.FieldMap{
+		// 		log.FieldKeyTime:  "@timestamp",
+		// 		log.FieldKeyLevel: "@level",
+		// 		log.FieldKeyMsg:   "@message",
+		// 		log.FieldKeyFunc:  "@caller",
+		// 	},
+		// })
 	}
 
 	quiet, _ := cmd.Flags().GetBool("quiet")

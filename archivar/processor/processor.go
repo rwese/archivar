@@ -2,6 +2,7 @@ package processor
 
 import (
 	"github.com/rwese/archivar/archivar/processor/processors"
+	_ "github.com/rwese/archivar/archivar/processor/processors/encrypter"
 	_ "github.com/rwese/archivar/archivar/processor/processors/sanatizer"
 	"github.com/sirupsen/logrus"
 )

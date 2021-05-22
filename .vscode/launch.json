@@ -20,6 +20,34 @@
                 ]
         },
         {
+            "name": "encrypter",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/archivar/",
+            "envFile": "${workspaceFolder}/.env",
+            "args": ["-", "encrypter", "key", "generate"
+                //  "--debug", 
+                //  "-i", "50",
+                //  "--config", "../../etc/gdrive.yaml",
+                ]
+        },
+        {
+            "name": "decrypt-test",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/archivar/",
+            "envFile": "${workspaceFolder}/.env",
+            "args": ["-", "encrypter", "decrypt",
+                 "--privateKey", "/home/wese/Development/webdav-uploader/cmd/archivar/private.pem",
+                 "--srcFile", "/home/wese/Development/webdav-uploader/tmp/hostprofis/20210513_164244_Fwd Rechnung RE-284021/10985-RE-2840_21-1609502400.pdf",
+                 "--destFile", "/home/wese/Development/webdav-uploader/tmp/hostprofis/20210513_164244_Fwd Rechnung RE-284021/10985-RE-2840_21-1609502400.decrypted.pdf",
+                //  "-i", "50",
+                //  "--config", "../../etc/gdrive.yaml",
+                ]
+        },
+        {
             "name": "gdrive",
             "type": "go",
             "request": "launch",
