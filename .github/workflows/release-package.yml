@@ -1,5 +1,10 @@
 name: Publish Archivar Docker
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - develop
+
 jobs:
   build-and-publish-head:
     runs-on: [self-hosted]

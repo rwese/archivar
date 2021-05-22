@@ -5,7 +5,7 @@ on:
       - "**"
 
 jobs:
-  build-and-publish-release:
+  build-and-publish-release-tags:
     runs-on: [self-hosted]
 
     steps:
