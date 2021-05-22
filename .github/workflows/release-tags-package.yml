@@ -18,6 +18,15 @@ jobs:
           input_string: ${{ github.ref }}
           version_extractor_regex: '\/v(.*)$'
 
+      - name: Use parsed semver
+        run: |
+          echo "major:       v${{ steps.semver_parser.outputs.major }}"
+          echo "minor:       v${{ steps.semver_parser.outputs.minor }}"
+          echo "patch:       v${{ steps.semver_parser.outputs.patch }}"
+          echo "prerelease:  v${{ steps.semver_parser.outputs.prerelease }}"
+          echo "build:       v${{ steps.semver_parser.outputs.build }}"
+          echo "fullversion: v${{ steps.semver_parser.outputs.fullversion }}"
+
       - name: Build and Publish latest Release Major
         uses: VaultVulp/gp-docker-action@1.1.8
         with:
