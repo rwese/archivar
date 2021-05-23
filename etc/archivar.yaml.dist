@@ -37,6 +37,18 @@ Archivers:
       }
     UploadDirectory: /archivar/
 Gatherers:
+  local_filesystem:
+    Type: filesystem
+    Config:
+      Directory: /home/user/input_directory
+      # DeleteDownloaded: true
+  webdav_nextcloud:
+    Type: webdav
+    Config:
+      Username:
+      Password:
+      Server: https://server/remote.php/dav/files/username/
+      UploadDirectory: /input_directory/
   imap_mail_account:
     Type: imap
     Config:

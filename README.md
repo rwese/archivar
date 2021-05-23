@@ -18,11 +18,10 @@ working with GO and tinker around.
 │ │►IMAP       ├─►│ │►Filename   ├─►│ │►SANATIZER ├─►│ │►WEBDAV     │
 │ │►WEBDAV     │  │ └►Filesize   │  │ └►ENCRYPTER │  │ │►GDRIVE     │
 │ └►FILESYSTEM │  │              │  │             │  │ └►FILESYSTEM │
-└──────────────┘  └───┬──────────┤  └─┬───────────┤  └──────────────┘
-                      │ FILTER   │    │ PROCESS   │
-                      │ │        │    └───────────┘
-                      │ │►ACCEPT │
-                      │ │►REJECT │
+└──┬───────────┤  └───┬──────────┤  └─┬───────────┤  └──┬───────────┤
+   │ DOWNLOAD  │      │ FILTER   │    │ PROCESS   │     │ UPLOAD    │
+   │ DELETE    │      │ │►ACCEPT │    └───────────┘     └───────────┘
+   └───────────┘      │ │►REJECT │
                       │ └►MISS   │
                       └──────────┘
 ```
@@ -63,6 +62,10 @@ version: "2.3"
 services:
   archivar:
     image: docker.pkg.github.com/rwese/archivar/archivar:latest
+    ## semver images
+    # image: docker.pkg.github.com/rwese/archivar/archivar:0
+    # image: docker.pkg.github.com/rwese/archivar/archivar:0.2
+    # image: docker.pkg.github.com/rwese/archivar/archivar:0.2.1
     restart: unless-stopped
     volumes:
       - "./etc:/etc/go-archivar"
@@ -90,9 +93,10 @@ services:
 - Gatherers
   - [x] IMAP
   - [ ] POP3
-  - [x] Webdav
   - [ ] Dropbox
   - [ ] Google Drive
+  - [x] FileSystem
+  - [x] Webdav
   - Reddit
     - [ ] Saved Posts
     - [ ] Top/New/Hot of Subreddit
@@ -101,6 +105,7 @@ services:
   - [x] Webdav
   - [ ] Dropbox
   - [x] Google Drive
+  - [x] FileSystem
 - Processors
   - [x] Sanatizer (Filename)
   - [x] Encryption
@@ -139,6 +144,17 @@ Jobs:
 
 ## Gatherers
 
+### FILESYSTEM
+
+```yaml
+Gatherers:
+  <gatherer_name>:
+    Type: filesystem
+    Config:
+      Directory: /home/user/input_directory
+      # DeleteDownloaded: true
+```
+
 ### IMAP
 
 ```yaml
@@ -151,6 +167,19 @@ Gatherers:
       Password:
       # DeleteDownloaded: False
       # AllowInsecureSSL: False
+```
+
+### WEBDAV
+
+```yaml
+Gatherers:
+  <gatherer_name>:
+    Type: webdav
+    Config:
+      Username:
+      Password:
+      Server: https://server/remote.php/dav/files/username/
+      UploadDirectory: /input_directory/
 ```
 
 ## Archivers
