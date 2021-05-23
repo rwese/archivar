@@ -77,7 +77,6 @@ services:
 ## TODO
 
 - General
-  - [ ] MUST find a better naming for ´/internal` packages, no named imports
   - [ ] Solution to remember already archived things
   - [ ] How to handle Processors adding files
   - [ ] Tests now that things shape up
@@ -93,26 +92,27 @@ services:
   - [x] Use Github-Actions
   - [x] Use Github-Packages for DockerImages
   - [x] MultiStaged DockerFile
+  - [x] MUST find a better naming for ´/internal` packages, no named imports
 - Gatherers
-  - [x] IMAP
   - [ ] POP3
   - [ ] Dropbox
   - [ ] Google Drive
   - [x] FileSystem
+  - [x] IMAP
   - [x] Webdav
   - Reddit
     - [ ] Saved Posts
     - [ ] Top/New/Hot of Subreddit
     - [ ] w/o Post Comments?
 - Archivers
-  - [x] Webdav
   - [ ] Dropbox
-  - [x] Google Drive
   - [x] FileSystem
+  - [x] Google Drive
+  - [x] Webdav
 - Processors
   - [x] Sanatizer (Filename)
   - [x] Encryption
-    - [ ] Passphrase Support
+    - [ ] Passphrase Support for decryption
     - [ ] Encrypt Metadata
   - [ ] OCR
   - [ ] Anti Virus (rly?)

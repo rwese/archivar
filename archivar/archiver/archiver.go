@@ -8,13 +8,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// New will return a new archiver backend based on the given typeName and config
-func New(typeName string, config interface{}, logger *logrus.Logger) (archiver archivers.Archiver) {
-	g := archivers.Get(typeName, config, logger)
+// NewArchiver will return a new archiver backend based on the given typeName and config
+func NewArchiver(typeName string, config interface{}, logger *logrus.Logger) archivers.Archiver {
+	archiver := archivers.GetArchiver(typeName, config, logger)
 
-	if g == nil {
+	if archiver == nil {
 		logger.Panicf("could not create new archiver '%s' from given config", typeName)
 	}
 
-	return g
+	return archiver
+}
+
+// NewArchiver will return a new archiver backend based on the given typeName and config
+func NewGatherer(typeName string, config interface{}, storage archivers.Archiver, logger *logrus.Logger) archivers.Gatherer {
+	gatherer := archivers.GetGatherer(typeName, config, storage, logger)
+
+	if gatherer == nil {
+		logger.Panicf("could not create new gatherer '%s' from given config", typeName)
+	}
+
+	return gatherer
 }

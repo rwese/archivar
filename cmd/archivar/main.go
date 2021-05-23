@@ -7,7 +7,6 @@ import (
 
 	"github.com/rwese/archivar/archivar"
 	encrypter "github.com/rwese/archivar/internal/encrypter"
-	_ "github.com/rwese/archivar/internal/imap"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

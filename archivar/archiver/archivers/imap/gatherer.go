@@ -1,40 +1,41 @@
 package imap
 
 import (
-	imapClient "github.com/rwese/archivar/internal/imap"
 	"github.com/rwese/archivar/internal/utils/config"
 
 	"github.com/emersion/go-imap"
 	"github.com/rwese/archivar/archivar/archiver/archivers"
-	"github.com/rwese/archivar/archivar/gatherer/gatherers"
+	"github.com/rwese/archivar/archivar/archiver/archivers/imap/client"
 	"github.com/sirupsen/logrus"
 )
 
-type Imap struct {
+type ImapGathererConfig struct {
 	DeleteDownloaded bool
+}
+
+type ImapGatherer struct {
+	deleteDownloaded bool
 	storage          archivers.Archiver
-	client           *imapClient.Imap
+	client           *client.Imap
 	logger           *logrus.Logger
 }
 
-func init() {
-	gatherers.Register(New)
-}
+func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logger) (i archivers.Gatherer) {
+	var igc ImapGathererConfig
+	config.ConfigFromStruct(c, &igc)
 
-func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) (i gatherers.Gatherer) {
-	config.ConfigFromStruct(c, &i)
-
-	return &Imap{
-		storage: storage,
-		logger:  logger,
-		client:  imapClient.New(c, storage, logger),
+	return &ImapGatherer{
+		deleteDownloaded: igc.DeleteDownloaded,
+		storage:          storage,
+		logger:           logger,
+		client:           client.New(c, storage, logger),
 	}
 }
 
-func (i Imap) Download() (err error) {
+func (i ImapGatherer) Download() (err error) {
 	done := make(chan error, 1)
 	messages := make(chan *imap.Message, 10)
-	if err = i.client.GetMessages(messages, done, i.DeleteDownloaded); err != nil {
+	if err = i.client.GetMessages(messages, done, i.deleteDownloaded); err != nil {
 		return
 	}
 
@@ -53,7 +54,7 @@ func (i Imap) Download() (err error) {
 		readMsgSeq.AddNum(msg.SeqNum)
 	}
 
-	if i.DeleteDownloaded {
+	if i.deleteDownloaded {
 		i.logger.Debug("deleting processed messages")
 
 		if err = i.client.FlagAndDeleteMessages(readMsgSeq); err != nil {
@@ -64,7 +65,7 @@ func (i Imap) Download() (err error) {
 	return
 }
 
-func (i *Imap) Connect() (err error) {
+func (i *ImapGatherer) Connect() (err error) {
 	if err = i.storage.Connect(); err != nil {
 		return
 	}

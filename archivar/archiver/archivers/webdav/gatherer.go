@@ -1,53 +1,48 @@
-package filesystem
+package webdav
 
 import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
-	"github.com/rwese/archivar/archivar/gatherer/gatherers"
-	filesystemClient "github.com/rwese/archivar/internal/filesystem"
+	"github.com/rwese/archivar/archivar/archiver/archivers/webdav/client"
 	"github.com/rwese/archivar/internal/utils/config"
 	"github.com/sirupsen/logrus"
 )
 
-//
-type filesystem struct {
+// WebdavGatherer allows to upload files to a remote webdav server
+type WebdavGatherer struct {
 	storage          archivers.Archiver
 	logger           *logrus.Logger
-	client           *filesystemClient.FileSystem
+	client           *client.Webdav
 	directory        string
 	deleteDownloaded bool
 }
 
-type filesystemConfig struct {
+type WebdavGathererConfig struct {
 	Directory        string
 	DeleteDownloaded bool
 }
 
-func init() {
-	gatherers.Register(New)
-}
-
-// New will return a new fs downloader
-func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) gatherers.Gatherer {
-	wc := &filesystemConfig{}
+// New will return a new webdav downloader
+func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logger) archivers.Gatherer {
+	wc := &WebdavGathererConfig{}
 	config.ConfigFromStruct(c, &wc)
 
-	filesystem := &filesystem{
+	webdav := &WebdavGatherer{
 		storage:          storage,
 		logger:           logger,
-		client:           filesystemClient.New(logger),
+		client:           client.New(c, logger),
 		directory:        wc.Directory,
 		deleteDownloaded: wc.DeleteDownloaded,
 	}
-	return filesystem
+	return webdav
 }
 
-func (w filesystem) Download() (err error) {
+func (w WebdavGatherer) Download() (err error) {
 	if err = w.Connect(); err != nil {
 		return
 	}
 
 	var downloadedFiles []string
-	if err = w.client.DownloadFiles(w.directory, w.storage.Upload); err != nil {
+	if downloadedFiles, err = w.client.DownloadFiles(w.directory, w.storage.Upload); err != nil {
 		return
 	}
 
@@ -61,7 +56,12 @@ func (w filesystem) Download() (err error) {
 	return
 }
 
-func (w *filesystem) Connect() (err error) {
+func (w *WebdavGatherer) Connect() (err error) {
+
+	if err = w.client.Connect(); err != nil {
+		return
+	}
+
 	if !w.client.DirExists(w.directory) {
 		w.logger.Fatalf("failed to access upload directory, which will not be automatically created: %s", err.Error())
 	}

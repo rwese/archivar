@@ -1,4 +1,4 @@
-package middleware
+package filter
 
 import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
@@ -7,7 +7,7 @@ import (
 	"github.com/rwese/archivar/internal/file"
 )
 
-func New(next archivers.Archiver, filter filters.Filter) archivers.Archiver {
+func NewMiddleware(next archivers.Archiver, filter filters.Filter) archivers.Archiver {
 	fa := &filterArchiver{next: next, filter: filter}
 	return fa
 }

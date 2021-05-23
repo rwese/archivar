@@ -3,11 +3,8 @@ package archivar
 import (
 	"github.com/rwese/archivar/archivar/archiver"
 	"github.com/rwese/archivar/archivar/filter"
-	filterMiddleware "github.com/rwese/archivar/archivar/filter/middleware"
-	"github.com/rwese/archivar/archivar/gatherer"
 	"github.com/rwese/archivar/archivar/job"
 	"github.com/rwese/archivar/archivar/processor"
-	processorMiddleware "github.com/rwese/archivar/archivar/processor/middleware"
 	"github.com/sirupsen/logrus"
 )
 
@@ -58,22 +55,22 @@ func (s *Archivar) addJob(jobName string, j job.JobConfig) {
 	}
 
 	c := s.config.Archivers[j.Archiver]
-	archiver := archiver.New(c.Type, c.Config, s.logger)
+	newArchiver := archiver.NewArchiver(c.Type, c.Config, s.logger)
 
 	for _, processorName := range j.Processors {
 		c = s.config.Processors[processorName]
 		p := processor.New(c.Type, c.Config, s.logger)
-		archiver = processorMiddleware.New(archiver, p)
+		newArchiver = processor.NewMiddleware(newArchiver, p)
 	}
 
 	for _, filterName := range j.Filters {
 		c = s.config.Filters[filterName]
 		f := filter.New(c.Type, c.Config, s.logger)
-		archiver = filterMiddleware.New(archiver, f)
+		newArchiver = filter.NewMiddleware(newArchiver, f)
 	}
 
 	c = s.config.Gatherers[j.Gatherer]
-	gatherer := gatherer.New(c.Type, c.Config, archiver, s.logger)
+	gatherer := archiver.NewGatherer(c.Type, c.Config, newArchiver, s.logger)
 	s.jobs = append(s.jobs, job.Job{
 		Name:     jobName,
 		Interval: interval,

@@ -1,4 +1,4 @@
-package middleware
+package processor
 
 import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
@@ -6,7 +6,7 @@ import (
 	"github.com/rwese/archivar/internal/file"
 )
 
-func New(next archivers.Archiver, processor processors.Processor) archivers.Archiver {
+func NewMiddleware(next archivers.Archiver, processor processors.Processor) archivers.Archiver {
 	fa := &processorArchiver{next: next, processor: processor}
 	return fa
 }

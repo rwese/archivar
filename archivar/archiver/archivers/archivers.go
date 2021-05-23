@@ -6,9 +6,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type factory func(c interface{}, logger *logrus.Logger) Archiver
+type archiverFactory func(c interface{}, logger *logrus.Logger) Archiver
 
-var registered = make(map[string]factory)
+var registeredArchiver = make(map[string]archiverFactory)
 
 // UploadFunc takes a file and uploads it to their archive backend
 type UploadFunc func(file.File) (err error)
@@ -20,13 +20,13 @@ type Archiver interface {
 }
 
 // Register a new Archiver
-func Register(p factory) {
-	registered[caller.FactoryPackage()] = p
+func RegisterArchiver(p archiverFactory) {
+	registeredArchiver[caller.FactoryPackage()] = p
 }
 
 // Get a registered archiver
-func Get(n string, c interface{}, logger *logrus.Logger) Archiver {
-	p, exists := registered[n]
+func GetArchiver(n string, c interface{}, logger *logrus.Logger) Archiver {
+	p, exists := registeredArchiver[n]
 	if !exists {
 		return nil
 	}

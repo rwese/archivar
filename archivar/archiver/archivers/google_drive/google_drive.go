@@ -28,7 +28,7 @@ type GoogleDrive struct {
 }
 
 func init() {
-	archivers.Register(New)
+	archivers.RegisterArchiver(New)
 }
 
 // New will return a new google_drive archivar
