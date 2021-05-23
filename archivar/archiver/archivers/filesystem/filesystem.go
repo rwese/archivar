@@ -36,7 +36,7 @@ func New(c interface{}, logger *logrus.Logger) archivers.Archiver {
 	fsystem := &FileSystem{
 		logger:    logger,
 		directory: fsystemConfig.Directory,
-		client:    filesystemClient.New(fsystemConfig.Directory),
+		client:    filesystemClient.New(logger),
 	}
 
 	return fsystem

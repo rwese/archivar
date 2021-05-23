@@ -34,15 +34,6 @@ func (w *Webdav) Upload(fileName string, fileDirectory string, fileHandle io.Rea
 		return
 	}
 
-	if w.newSession {
-		w.newSession = false
-		_, err = w.Client.Stat(fileDirectory)
-		if err != nil {
-			w.logger.Fatalf("failed to access upload directory, which will not automatically created: %s", err.Error())
-		}
-
-	}
-
 	w.MkdirAll(fileDirectory)
 
 	uploadFileName := path.Join(fileDirectory, fileName)

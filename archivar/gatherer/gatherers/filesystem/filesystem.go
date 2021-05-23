@@ -1,23 +1,23 @@
-package webdav
+package filesystem
 
 import (
 	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/archivar/gatherer/gatherers"
+	filesystemClient "github.com/rwese/archivar/internal/filesystem"
 	"github.com/rwese/archivar/internal/utils/config"
-	webdavClient "github.com/rwese/archivar/internal/webdav"
 	"github.com/sirupsen/logrus"
 )
 
-// Webdav allows to upload files to a remote webdav server
-type Webdav struct {
+//
+type filesystem struct {
 	storage          archivers.Archiver
 	logger           *logrus.Logger
-	client           *webdavClient.Webdav
+	client           *filesystemClient.FileSystem
 	directory        string
 	deleteDownloaded bool
 }
 
-type WebdavConfig struct {
+type filesystemConfig struct {
 	Directory        string
 	DeleteDownloaded bool
 }
@@ -26,28 +26,28 @@ func init() {
 	gatherers.Register(New)
 }
 
-// New will return a new webdav downloader
+// New will return a new fs downloader
 func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) gatherers.Gatherer {
-	wc := &WebdavConfig{}
+	wc := &filesystemConfig{}
 	config.ConfigFromStruct(c, &wc)
 
-	webdav := &Webdav{
+	filesystem := &filesystem{
 		storage:          storage,
 		logger:           logger,
-		client:           webdavClient.New(c, logger),
+		client:           filesystemClient.New(logger),
 		directory:        wc.Directory,
 		deleteDownloaded: wc.DeleteDownloaded,
 	}
-	return webdav
+	return filesystem
 }
 
-func (w Webdav) Download() (err error) {
+func (w filesystem) Download() (err error) {
 	if err = w.Connect(); err != nil {
 		return
 	}
 
 	var downloadedFiles []string
-	if downloadedFiles, err = w.client.DownloadFiles(w.directory, w.storage.Upload); err != nil {
+	if err = w.client.DownloadFiles(w.directory, w.storage.Upload); err != nil {
 		return
 	}
 
@@ -61,12 +61,7 @@ func (w Webdav) Download() (err error) {
 	return
 }
 
-func (w *Webdav) Connect() (err error) {
-
-	if err = w.client.Connect(); err != nil {
-		return
-	}
-
+func (w *filesystem) Connect() (err error) {
 	if !w.client.DirExists(w.directory) {
 		w.logger.Fatalf("failed to access upload directory, which will not be automatically created: %s", err.Error())
 	}

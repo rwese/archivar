@@ -12,20 +12,19 @@ working with GO and tinker around.
 ## DIAGRAM
 
 ```
-┌─────────────┐  ┌──────────────┐  ┌─────────────┐  ┌────────────┐
-│ GATHERER    │  │ FILTERS      │  │ PROCESSOR   │  │ ARCHIVER   │
-│ │           │  │ │            │  │ │           │  │ │          │
-│ └►IMAP      ├─►│ │►Filename   ├─►│ └►SANATIZER ├─►│ │►WEBDAV   │
-│             │  │ └►Filesize   │  │             │  │ └►GDRIVE   │
-│             │  │              │  │             │  │            │
-└─────────────┘  └───┬──────────┤  └─┬───────────┤  └────────────┘
-                     │ FILTER   │    │ PROCESS   │
-                     │ │        │    │ ENCRYPTER │
-                     │ │►ACCEPT │    └───────────┘
-                     │ │►REJECT │
-                     │ └►MISS   │
-                     │          │
-                     └──────────┘
+┌──────────────┐  ┌──────────────┐  ┌─────────────┐  ┌──────────────┐
+│ GATHERER     │  │ FILTERS      │  │ PROCESSOR   │  │ ARCHIVER     │
+│ │            │  │ │            │  │ │           │  │ │            │
+│ │►IMAP       ├─►│ │►Filename   ├─►│ │►SANATIZER ├─►│ │►WEBDAV     │
+│ │►WEBDAV     │  │ └►Filesize   │  │ └►ENCRYPTER │  │ │►GDRIVE     │
+│ └►FILESYSTEM │  │              │  │             │  │ └►FILESYSTEM │
+└──────────────┘  └───┬──────────┤  └─┬───────────┤  └──────────────┘
+                      │ FILTER   │    │ PROCESS   │
+                      │ │        │    └───────────┘
+                      │ │►ACCEPT │
+                      │ │►REJECT │
+                      │ └►MISS   │
+                      └──────────┘
 ```
 
 ## Example
@@ -91,7 +90,7 @@ services:
 - Gatherers
   - [x] IMAP
   - [ ] POP3
-  - [ ] Webdav
+  - [x] Webdav
   - [ ] Dropbox
   - [ ] Google Drive
   - Reddit
@@ -106,6 +105,7 @@ services:
   - [x] Sanatizer (Filename)
   - [x] Encryption
     - [ ] Passphrase Support
+    - [ ] Encrypt Metadata
   - [ ] OCR
   - [ ] Anti Virus (rly?)
 - Filters

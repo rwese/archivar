@@ -100,7 +100,6 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 		log.Fatal(err)
 	}
 
-	// var files []*file.File
 	for {
 		p, err := m.NextPart()
 		if err == io.EOF {
@@ -109,6 +108,7 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 			log.Fatal(err)
 		}
 
+		var filename string
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
 			contentType, _, _ := h.ContentType()
@@ -123,19 +123,10 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 				continue
 			}
 
-			filename := mailData.subject + fileExt
-			// fileCh <-
-			file := file.File{
-				Filename:  filename,
-				Directory: filePrefixPath,
-				Body:      p.Body,
-			}
+			filename = mailData.subject + fileExt
 
-			if err = upload(file); err != nil {
-				return err
-			}
 		case *mail.AttachmentHeader:
-			filename, _ := h.Filename()
+			filename, _ = h.Filename()
 			if filename == "" {
 				continue
 			}
@@ -143,15 +134,18 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 			logrus.Debugf("Got attachment: %v", filename)
 			logrus.Debugf("Saving as: %v", filePrefixPath)
 
-			file := file.File{
-				Filename:  filename,
-				Directory: filePrefixPath,
-				Body:      p.Body,
-			}
+		default:
+			continue
+		}
 
-			if err = upload(file); err != nil {
-				return err
-			}
+		file := file.File{
+			Filename:  filename,
+			Directory: filePrefixPath,
+			Body:      p.Body,
+		}
+
+		if err = upload(file); err != nil {
+			return err
 		}
 	}
 	return nil

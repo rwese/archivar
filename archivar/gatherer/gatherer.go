@@ -5,6 +5,7 @@ import (
 	"github.com/rwese/archivar/archivar/gatherer/gatherers"
 	"github.com/sirupsen/logrus"
 
+	_ "github.com/rwese/archivar/archivar/gatherer/gatherers/filesystem"
 	_ "github.com/rwese/archivar/archivar/gatherer/gatherers/imap"
 	_ "github.com/rwese/archivar/archivar/gatherer/gatherers/webdav"
 )

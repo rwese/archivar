@@ -1,6 +1,7 @@
 package webdav
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/rwese/archivar/archivar/archiver/archivers"
@@ -39,9 +40,29 @@ func (w *Webdav) Upload(f file.File) (err error) {
 	}
 
 	uploadFilePath := path.Join(w.UploadDirectory, f.Directory)
+	uploadFile := path.Join(w.UploadDirectory, f.Directory, f.Filename)
+
+	if w.compareChecksum(uploadFile, f.Checksum) {
+		return nil
+	}
+
 	return w.client.Upload(f.Filename, uploadFilePath, f.Body)
 }
 
 func (w *Webdav) Connect() (err error) {
 	return w.client.Connect()
+}
+
+func (w *Webdav) compareChecksum(file, checksum string) bool {
+	if checksum == "" {
+		return false
+	}
+
+	fs, err := w.client.Client.Stat(file)
+	if err != nil {
+		return false
+	}
+
+	currentChecksum := fmt.Sprintf("%d", fs.Size())
+	return checksum == currentChecksum
 }
