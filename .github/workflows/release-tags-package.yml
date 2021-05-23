@@ -5,12 +5,10 @@ on:
       - "**"
 
 jobs:
-  build-and-publish-release:
-    runs-on: [self-hosted]
+  build-and-publish-release-tags:
+    runs-on: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: Parse semver string
         id: semver_parser
         uses: booxmedialtd/ws-action-parse-semver@v1
@@ -18,23 +16,9 @@ jobs:
           input_string: ${{ github.ref }}
           version_extractor_regex: '\/v(.*)$'
 
-      - name: Build and Publish latest Release Major
-        uses: VaultVulp/gp-docker-action@1.1.8
+      - uses: actions/checkout@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          image-name: archivar
-          image-tag: ${{ steps.semver_parser.outputs.major }}
-          dockerfile: docker/Dockerfile
-          build-context: .
-
-      - name: Build and Publish latest Release Minor
-        uses: VaultVulp/gp-docker-action@1.1.8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          image-name: archivar
-          image-tag: ${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}
-          dockerfile: docker/Dockerfile
-          build-context: .
+          ref: ${{ github.ref }}
 
       - name: Build and Publish latest Release Patch
         uses: VaultVulp/gp-docker-action@1.1.8
@@ -43,4 +27,19 @@ jobs:
           image-name: archivar
           image-tag: ${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}.${{ steps.semver_parser.outputs.patch }}
           dockerfile: docker/Dockerfile
-          build-context: .
+
+      - name: Build and Publish latest Release Minor
+        uses: VaultVulp/gp-docker-action@1.1.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: archivar
+          image-tag: ${{ steps.semver_parser.outputs.major }}.${{ steps.semver_parser.outputs.minor }}
+          dockerfile: docker/Dockerfile
+
+      - name: Build and Publish latest Release Major
+        uses: VaultVulp/gp-docker-action@1.1.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: archivar
+          image-tag: ${{ steps.semver_parser.outputs.major }}
+          dockerfile: docker/Dockerfile

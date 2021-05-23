@@ -1,8 +1,13 @@
 name: Publish Archivar Docker
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - develop
+
 jobs:
   build-and-publish-head:
-    runs-on: [self-hosted]
+    runs-on: [ubuntu-latest]
     if: github.ref == 'refs/heads/develop'
 
     steps:
@@ -17,7 +22,7 @@ jobs:
           dockerfile: docker/Dockerfile
 
   build-and-publish-latest:
-    runs-on: [self-hosted]
+    runs-on: [ubuntu-latest]
     if: github.ref == 'refs/heads/main'
 
     steps:
