@@ -1,7 +1,12 @@
 package encrypter
 
 import (
+	"crypto/rsa"
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var CmdEncrypterKeyGenerate = &cobra.Command{
@@ -10,7 +15,17 @@ var CmdEncrypterKeyGenerate = &cobra.Command{
 	Long:  `Generate both a public and private RSA key and dump it to stdout.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		keysize, _ := cmd.Flags().GetInt("keysize")
-		GenerateKey(keysize)
+		getPassphraseInput, _ := cmd.Flags().GetBool("with-passphrase")
+
+		if getPassphraseInput {
+			passphrase, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+			if err != nil {
+				log.Fatal(err)
+			}
+			GenerateKeyWithPassphrase(keysize, passphrase)
+		} else {
+			GenerateKey(keysize)
+		}
 	},
 }
 
@@ -31,13 +46,35 @@ var CmdEncrypterDecrypt = &cobra.Command{
 		privateKeyFile, _ := cmd.Flags().GetString("privateKey")
 		srcFile, _ := cmd.Flags().GetString("srcFile")
 		destFile, _ := cmd.Flags().GetString("destFile")
+		getPassphraseInput, _ := cmd.Flags().GetBool("with-passphrase")
 
-		key, err := LoadPrivateKeyFile(privateKeyFile)
+		var (
+			privateKey *rsa.PrivateKey
+			err        error
+		)
+
+		if getPassphraseInput {
+			passphrase, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			privateKey, err = LoadEncryptedPrivateKeyFile(privateKeyFile, passphrase)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			privateKey, err = LoadPrivateKeyFile(privateKeyFile)
+			if err != nil {
+				panic(err)
+			}
+		}
+
 		if err != nil {
 			panic(err)
 		}
 
-		e := New(nil, key)
+		e := New(nil, privateKey)
 		if err = e.DecryptFile(srcFile, destFile); err != nil {
 			panic(err)
 		}
@@ -66,9 +103,11 @@ var CmdEncrypter = &cobra.Command{
 
 func init() {
 	CmdEncrypterKeyGenerate.Flags().Int("keysize", 1024, "keysize in bits")
+	CmdEncrypterKeyGenerate.Flags().BoolP("with-passphrase", "p", false, "Ask for passphrase")
 	CmdEncrypterKey.AddCommand(CmdEncrypterKeyGenerate)
 	CmdEncrypter.AddCommand(CmdEncrypterKey)
 
+	CmdEncrypterDecrypt.Flags().BoolP("with-passphrase", "p", false, "Ask for passphrase")
 	CmdEncrypterDecrypt.Flags().String("privateKey", "", "Private key file")
 	CmdEncrypterDecrypt.Flags().String("srcFile", "", "file to decrypt")
 	CmdEncrypterDecrypt.Flags().String("destFile", "", "file to write to")

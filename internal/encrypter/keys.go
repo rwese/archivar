@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -20,8 +21,18 @@ func GenerateKey(keysize int) (err error) {
 	PrintPEMPrivateKey(privateKey)
 	PrintPEMPublicKey(&publicKey)
 
-	SavePEMPublicKey("public.pem", &publicKey)
-	SavePEMPrivateKey("private.pem", privateKey)
+	return
+}
+
+func GenerateKeyWithPassphrase(keysize int, passphrase []byte) (err error) {
+	privateKey, err := rsa.(rand.Reader, keysize)
+	if err != nil {
+		return
+	}
+	publicKey := privateKey.PublicKey
+
+	PrintPEMPrivateKey(privateKey)
+	PrintPEMPublicKey(&publicKey)
 
 	return
 }
@@ -91,6 +102,14 @@ func LoadPrivateKeyFile(fileName string) (privateKey *rsa.PrivateKey, err error)
 
 	return DecodePrivateKey(keyFile)
 }
+func LoadEncryptedPrivateKeyFile(fileName string, passphrase []byte) (privateKey *rsa.PrivateKey, err error) {
+	keyFile, err := os.ReadFile(fileName)
+	if err != nil {
+		return
+	}
+
+	return DecodeEncryptedPrivateKey(keyFile, passphrase)
+}
 
 func DecodePublicKey(key []byte) (publicKey *rsa.PublicKey, err error) {
 	decoder, _ := pem.Decode(key)
@@ -100,6 +119,29 @@ func DecodePublicKey(key []byte) (publicKey *rsa.PublicKey, err error) {
 func DecodePrivateKey(key []byte) (privateKey *rsa.PrivateKey, err error) {
 	decoder, _ := pem.Decode(key)
 	return x509.ParsePKCS1PrivateKey(decoder.Bytes)
+}
+
+func DecodeEncryptedPrivateKey(key []byte, passphrase []byte) (privateKey *rsa.PrivateKey, err error) {
+	if len(passphrase) == 0 {
+		return nil, errors.New("passphrase missing")
+	}
+
+	encryptedBlock, _ := pem.Decode(key)
+
+	block, err := x509.DecryptPEMBlock(
+		encryptedBlock,
+		passphrase,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err = x509.ParsePKCS1PrivateKey(block)
+	if err != nil {
+		return nil, err
+	}
+
+	return
 }
 
 func EncodePublicKey(key *rsa.PublicKey) ([]byte, error) {
