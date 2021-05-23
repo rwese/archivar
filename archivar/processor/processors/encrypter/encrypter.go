@@ -36,7 +36,6 @@ func New(c interface{}, logger *logrus.Logger) processors.Processor {
 	pc.AddExtension = ".encrypted"
 
 	config.ConfigFromStruct(c, &pc)
-	logger.Debug(pc.PublicKey)
 
 	publicKey, err := internalEncrypter.DecodePublicKey([]byte(pc.PublicKey))
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 
 type factory func(c interface{}, logger *logrus.Logger) Filter
 
-var registered = make(map[string]factory)
+var registeredFilters = make(map[string]factory)
 
 // Filter will return filterResult.Results and cause rejected to be not further processed
 type Filter interface {
@@ -18,15 +18,23 @@ type Filter interface {
 
 // Register a new filter
 func Register(p factory) {
-	registered[caller.FactoryPackage()] = p
+	registeredFilters[caller.FactoryPackage()] = p
 }
 
 // Get a registered filter
 func Get(n string, c interface{}, logger *logrus.Logger) Filter {
-	p, exists := registered[n]
+	p, exists := registeredFilters[n]
 	if !exists {
 		return nil
 	}
 
 	return p(c, logger)
+}
+
+func ListFilters() (n []string) {
+	for f := range registeredFilters {
+		n = append(n, f)
+	}
+
+	return
 }

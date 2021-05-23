@@ -2,7 +2,6 @@ package client
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -19,26 +18,26 @@ import (
 )
 
 type Imap struct {
-	Server           string
-	Username         string
-	Password         string
-	Inbox            string
-	AllowInsecureSSL bool
-	storage          archivers.Archiver
+	server           string
+	username         string
+	password         string
+	inbox            string
+	allowInsecureSSL bool
 	client           *client.Client
 	section          *imap.BodySectionName
 	items            []imap.FetchItem
 	logger           *logrus.Logger
 }
 
-func New(c interface{}, storage archivers.Archiver, logger *logrus.Logger) *Imap {
+func New(server, username, password, inbox string, allowInsecureSSL bool, logger *logrus.Logger) *Imap {
 	i := &Imap{
-		storage: storage,
-		logger:  logger,
-		Inbox:   "Inbox",
+		server:           server,
+		username:         username,
+		password:         password,
+		inbox:            inbox,
+		allowInsecureSSL: allowInsecureSSL,
+		logger:           logger,
 	}
-	jsonM, _ := json.Marshal(c)
-	json.Unmarshal(jsonM, &i)
 
 	i.section = &imap.BodySectionName{}
 	i.items = []imap.FetchItem{i.section.FetchItem()}
@@ -53,15 +52,15 @@ func (i *Imap) Connect() (err error) {
 		}
 	}
 
-	tlsConfig := tls.Config{InsecureSkipVerify: i.AllowInsecureSSL}
-	i.logger.Debugf("connecting to %s", i.Server)
-	i.client, err = client.DialTLS(i.Server, &tlsConfig)
+	tlsConfig := tls.Config{InsecureSkipVerify: i.allowInsecureSSL}
+	i.logger.Debugf("connecting to %s", i.server)
+	i.client, err = client.DialTLS(i.server, &tlsConfig)
 	if err != nil {
 		i.logger.Fatalf("failed to connect to imap: %s", err.Error())
 	}
 
-	i.logger.Debugf("authenticate as %s using password %t", i.Username, i.Password != "")
-	if err = i.client.Login(i.Username, i.Password); err != nil {
+	i.logger.Debugf("authenticate as %s using password %t", i.username, i.password != "")
+	if err = i.client.Login(i.username, i.password); err != nil {
 		i.logger.Fatalf("failed to login to imap: %s", err.Error())
 	}
 
@@ -203,12 +202,12 @@ func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
 func (i *Imap) GetMessages(messages chan *imap.Message, done chan error, deleteDownloaded bool) (err error) {
 	i.Connect()
 
-	mbox, err := i.client.Select(i.Inbox, false)
+	mbox, err := i.client.Select(i.inbox, false)
 	if err != nil {
 		return
 	}
 
-	i.logger.Debugf("selected '%s'", i.Inbox)
+	i.logger.Debugf("selected '%s'", i.inbox)
 
 	criteria := imap.NewSearchCriteria()
 	criteria.WithoutFlags = []string{imap.DeletedFlag}

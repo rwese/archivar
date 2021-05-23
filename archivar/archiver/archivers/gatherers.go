@@ -29,3 +29,11 @@ func GetGatherer(n string, c interface{}, storage Archiver, logger *logrus.Logge
 
 	return p(c, storage, logger)
 }
+
+func ListGatherers() (n []string) {
+	for g := range registeredGatherer {
+		n = append(n, g)
+	}
+
+	return
+}

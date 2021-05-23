@@ -20,8 +20,15 @@ const DEFAULT_PROFILER_PORT = 6060
 
 var rootCmd = &cobra.Command{
 	Use: "app",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+}
 
+var dumpCmd = &cobra.Command{
+	Use:   "dump",
+	Short: "Dump existing modules and configuration details",
+	Run: func(cmd *cobra.Command, args []string) {
+		svc := setupArchivarSvc(cmd, args)
+		fmt.Println("Dumping configured modules")
+		svc.Dump()
 	},
 }
 
@@ -56,6 +63,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("profiler", false, "run go profiler server")
 	rootCmd.PersistentFlags().Int("profilerPort", DEFAULT_PROFILER_PORT, "run go profiler server")
 	rootCmd.AddCommand(cmdWatch)
+	rootCmd.AddCommand(dumpCmd)
 	rootCmd.AddCommand(encrypter.CmdEncrypter)
 }
 
@@ -82,26 +90,21 @@ func setupArchivarSvc(cmd *cobra.Command, args []string) archivar.Archivar {
 		if trace {
 			logger.SetReportCaller(true)
 		}
-		// logger.SetFormatter(&log.JSONFormatter{
-		// 	// DisableColors: true,
-		// 	// FullTimestamp: true,
-		// 	FieldMap: log.FieldMap{
-		// 		log.FieldKeyTime:  "@timestamp",
-		// 		log.FieldKeyLevel: "@level",
-		// 		log.FieldKeyMsg:   "@message",
-		// 		log.FieldKeyFunc:  "@caller",
-		// 	},
-		// })
+
+		logger.SetFormatter(&log.JSONFormatter{
+			FieldMap: log.FieldMap{
+				log.FieldKeyTime:  "@timestamp",
+				log.FieldKeyLevel: "@level",
+				log.FieldKeyMsg:   "@message",
+				log.FieldKeyFunc:  "@caller",
+			},
+		})
 	}
 
 	quiet, _ := cmd.Flags().GetBool("quiet")
 	if quiet {
 		logger.SetLevel(log.ErrorLevel)
 	}
-
-	// if defaultJobInterval == 0 {
-	// 	defaultJobInterval = serviceConfig.Settings.DefaultInterval
-	// }
 
 	profiler, _ := cmd.Flags().GetBool("profiler")
 	profilerPort, _ := cmd.Flags().GetInt("profilerPort")

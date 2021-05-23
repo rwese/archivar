@@ -8,7 +8,7 @@ import (
 
 type factory func(c interface{}, logger *logrus.Logger) Processor
 
-var registered = make(map[string]factory)
+var registeredProcessors = make(map[string]factory)
 
 // Processor will modify the given file
 type Processor interface {
@@ -17,15 +17,23 @@ type Processor interface {
 
 // Register a new processor
 func Register(p factory) {
-	registered[caller.FactoryPackage()] = p
+	registeredProcessors[caller.FactoryPackage()] = p
 }
 
 // Get a processor from the registry
 func Get(n string, c interface{}, logger *logrus.Logger) Processor {
-	p, exists := registered[n]
+	p, exists := registeredProcessors[n]
 	if !exists {
 		return nil
 	}
 
 	return p(c, logger)
+}
+
+func ListProcessors() (n []string) {
+	for f := range registeredProcessors {
+		n = append(n, f)
+	}
+
+	return
 }

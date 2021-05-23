@@ -57,7 +57,6 @@ func (w WebdavGatherer) Download() (err error) {
 }
 
 func (w *WebdavGatherer) Connect() (err error) {
-
 	if err = w.client.Connect(); err != nil {
 		return
 	}

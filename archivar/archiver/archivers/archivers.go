@@ -33,3 +33,11 @@ func GetArchiver(n string, c interface{}, logger *logrus.Logger) Archiver {
 
 	return p(c, logger)
 }
+
+func ListArchivers() (archiverNames []string) {
+	for a := range registeredArchiver {
+		archiverNames = append(archiverNames, a)
+	}
+
+	return
+}

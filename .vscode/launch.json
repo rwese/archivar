@@ -19,6 +19,30 @@
                 ]
         },
         {
+            "name": "archivar no-cmd",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/archivar/",
+            "args": ["-",
+                 "--debug", 
+                //  "--profiler", 
+                //  "--quiet", 
+                 "--config", "../../etc/archivar.yaml",
+                ]
+        },
+        {
+            "name": "archivar dump",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/archivar/",
+            "args": ["-", "dump",
+                 "--debug", 
+                 "--config", "../../etc/archivar.yaml",
+                ]
+        },
+        {
             "name": "encrypter",
             "type": "go",
             "request": "launch",
