@@ -36,6 +36,8 @@ Minimal example config
 # etc/archivar.yaml
 Jobs:
   imap_to_webdav:
+    Gatherer: imap_mail_account
+    Archiver: webdav_nextcloud
 Gatherers:
   imap_mail_account:
     Type: imap
@@ -44,6 +46,7 @@ Gatherers:
       Username:
       Password:
       # DeleteDownloaded: False
+      # AllowInsecureSSL: False
 Archivers:
   webdav_nextcloud:
     Type: webdav
