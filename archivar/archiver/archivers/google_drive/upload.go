@@ -14,6 +14,6 @@ func (g *GoogleDrive) Upload(f file.File) (err error) {
 
 	filePath := path.Join(g.uploadDirectory, f.Directory(), f.Filename())
 	_, err = g.drive.PutFile(filePath, f.Body)
-	g.logger.Debugf("Uploaded '%s' to: %s", f.Filename, filePath)
+	g.logger.Debugf("Uploaded '%s' to: %s", f.Filename(), filePath)
 	return
 }

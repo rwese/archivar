@@ -30,7 +30,7 @@ func (w *WebdavArchiver) Upload(f file.File) (err error) {
 	uploadFilePath := path.Join(w.UploadDirectory, f.Directory())
 	uploadFile := path.Join(w.UploadDirectory, f.Directory(), f.Filename())
 
-	if w.compareChecksum(uploadFile, f.Checksum()) {
+	if w.compareChecksum(uploadFile, f) {
 		return nil
 	}
 
@@ -41,16 +41,23 @@ func (w *WebdavArchiver) Connect() (err error) {
 	return w.client.Connect()
 }
 
-func (w *WebdavArchiver) compareChecksum(file, checksum string) bool {
-	if checksum == "" {
+func (w *WebdavArchiver) compareChecksum(fileNameDst string, fileSrc file.File) bool {
+	if fileSrc.Checksum() == "" {
 		return false
 	}
 
-	fs, err := w.client.Client.Stat(file)
+	fs, err := w.client.Client.Stat(fileNameDst)
 	if err != nil {
 		return false
 	}
 
-	currentChecksum := fmt.Sprintf("%d", fs.Size())
-	return checksum == currentChecksum
+	fileDst := file.New(fs.Name(), "", nil, nil)
+	fileDst.ChecksumFunc = fileSrc.ChecksumFunc
+
+	err = fileDst.SetMetadataString("Filesize", fmt.Sprintf("%d", fs.Size()))
+	if err != nil {
+		return false
+	}
+
+	return fileDst.Checksum() == fileSrc.Checksum()
 }

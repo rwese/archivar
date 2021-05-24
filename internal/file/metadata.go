@@ -19,7 +19,7 @@ var reservedKeys = map[string]bool{
 	MetaDataChecksum:  true,
 }
 
-func (f *File) SetMetadataString(key string, data interface{}) (err error) {
+func (f *File) SetMetadata(key string, data interface{}) (err error) {
 	if _, exists := reservedKeys[key]; exists {
 		return errKeyIsReserved
 	}
@@ -29,6 +29,19 @@ func (f *File) SetMetadataString(key string, data interface{}) (err error) {
 }
 
 func (f *File) setMetadataString(key string, data interface{}) {
+	f.Metadata[key] = data
+}
+
+func (f *File) SetMetadataString(key string, data string) (err error) {
+	if _, exists := reservedKeys[key]; exists {
+		return errKeyIsReserved
+	}
+
+	f.setMetadata(key, data)
+	return
+}
+
+func (f *File) setMetadata(key string, data interface{}) {
 	f.Metadata[key] = data
 }
 
@@ -54,10 +67,6 @@ func (f *File) SetDirectory(Directory string) {
 	f.setMetadataString(MetaDataDirectory, Directory)
 }
 
-func (f *File) SetChecksum(Checksum string) {
-	f.setMetadataString(MetaDataChecksum, Checksum)
-}
-
 func (f *File) Filename() string {
 	data, err := f.GetMetadataString(MetaDataFilename)
 	if err != nil {
@@ -81,6 +90,10 @@ func Checksum(f File) (checksum string) {
 }
 
 func (f File) Checksum() (checksum string) {
+	if f.ChecksumFunc == nil {
+		return ""
+	}
+
 	return f.ChecksumFunc(f)
 }
 

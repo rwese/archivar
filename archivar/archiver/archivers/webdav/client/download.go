@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -51,14 +52,24 @@ func (w *Webdav) downloadFilesRecursive(rootDirectory, directory string, upload 
 		}
 
 		relativeDirectory := strings.TrimPrefix(directory, rootDirectory)
-		file := file.New(
+		newFile := file.New(
 			f.Name(),
 			relativeDirectory,
 			fh,
 			nil,
 		)
 
-		if err = upload(file); err != nil {
+		newFile.SetMetadataString("Filesize", fmt.Sprintf("%d", f.Size()))
+		newFile.ChecksumFunc = func(f file.File) string {
+			data, err := f.GetMetadataString("Filesize")
+			if err != nil {
+				return ""
+			}
+
+			return data
+		}
+
+		if err = upload(newFile); err != nil {
 			return nil, err
 		}
 
