@@ -1,4 +1,4 @@
-[![Publish Archivar Docker](https://github.com/rwese/archivar/actions/workflows/release-package.yml/badge.svg?branch=main&event=release)](https://github.com/rwese/archivar/actions/workflows/release-package.yml)
+[![Publish Archivar Docker](https://github.com/rwese/archivar/actions/workflows/release-package.yml/badge.svg)](https://github.com/rwese/archivar/actions/workflows/release-package.yml)
 
 # Archivar
 
