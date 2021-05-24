@@ -10,27 +10,33 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var logger = logrus.New()
+
+func init() {
+	logger.Level = logrus.DebugLevel
+}
+
 func TestJsonBrain_Load(t *testing.T) {
 	type fields struct {
 		backendArchiver archivers.Archiver
 		backendGatherer archivers.Gatherer
 		logger          *logrus.Logger
-		Memory          Memory
+		Brain           Brain
 		BrainFile       io.Reader
 	}
 	tests := []struct {
-		name       string
-		fields     fields
-		wantMemory Memory
-		wantErr    bool
+		name      string
+		fields    fields
+		wantBrain Brain
+		wantErr   bool
 	}{
 		{
 			name: "Simple loading",
 			fields: fields{
 				BrainFile: bytes.NewReader([]byte(`{"Memory":{"myMemory":0,"myOtherMemory":1}}`)),
 			},
-			wantMemory: Memory{
-				map[string]int64{
+			wantBrain: Brain{
+				Memory: map[string]int64{
 					"myMemory":      0,
 					"myOtherMemory": 1,
 				},
@@ -47,8 +53,8 @@ func TestJsonBrain_Load(t *testing.T) {
 			if err := i.Load(tt.fields.BrainFile); (err != nil) != tt.wantErr {
 				t.Errorf("JsonBrain.Load() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(i.Memory, tt.wantMemory) && !tt.wantErr {
-				t.Fatalf("Memory is failing me\nWant: %+v\nHave: %+v", tt.wantMemory, i.Memory)
+			if !reflect.DeepEqual(i.Brain, tt.wantBrain) && !tt.wantErr {
+				t.Fatalf("Memory is failing me\nWant: %+v\nHave: %+v", tt.wantBrain, i.Brain)
 			}
 		})
 	}
@@ -59,7 +65,7 @@ func TestJsonBrain_Save(t *testing.T) {
 		backendArchiver archivers.Archiver
 		backendGatherer archivers.Gatherer
 		logger          *logrus.Logger
-		Memory          Memory
+		Brain           Brain
 	}
 	tests := []struct {
 		name    string
@@ -70,8 +76,8 @@ func TestJsonBrain_Save(t *testing.T) {
 		{
 			name: "Simple saving",
 			fields: fields{
-				Memory: Memory{
-					map[string]int64{
+				Brain: Brain{
+					Memory: map[string]int64{
 						"myMemory":      0,
 						"myOtherMemory": 1,
 					},
@@ -86,7 +92,7 @@ func TestJsonBrain_Save(t *testing.T) {
 				backendArchiver: tt.fields.backendArchiver,
 				backendGatherer: tt.fields.backendGatherer,
 				logger:          tt.fields.logger,
-				Memory:          tt.fields.Memory,
+				Brain:           tt.fields.Brain,
 			}
 			fh := &bytes.Buffer{}
 			if err := i.Save(fh); (err != nil) != tt.wantErr {
@@ -94,7 +100,7 @@ func TestJsonBrain_Save(t *testing.T) {
 				return
 			}
 			if gotFh := fh.String(); gotFh != tt.wantFh {
-				t.Errorf("JsonBrain.Save() = %v, want '%v'", gotFh, tt.wantFh)
+				t.Errorf("JsonBrain.Save() = \nWant: %+v\nHave: '%+v'", tt.wantFh, gotFh)
 			}
 		})
 	}
@@ -130,7 +136,7 @@ func TestJsonBrain_Remember(t *testing.T) {
 		backendArchiver archivers.Archiver
 		backendGatherer archivers.Gatherer
 		logger          *logrus.Logger
-		Memory          Memory
+		Brain           Brain
 	}
 	type args struct {
 		data []interface{}
@@ -163,7 +169,7 @@ func TestJsonBrain_Remember(t *testing.T) {
 				backendArchiver: tt.fields.backendArchiver,
 				backendGatherer: tt.fields.backendGatherer,
 				logger:          tt.fields.logger,
-				Memory:          tt.fields.Memory,
+				Brain:           tt.fields.Brain,
 			}
 			err := i.Connect()
 			if err != nil && err != io.EOF {
@@ -172,6 +178,58 @@ func TestJsonBrain_Remember(t *testing.T) {
 			i.Remember(tt.args.data...)
 			if i.DoYouKnow(tt.argsRemembered.data...) != tt.wantRemembered {
 				t.Errorf("failed to remember")
+			}
+		})
+	}
+}
+
+func TestJsonBrain_CleanMemory(t *testing.T) {
+	type fields struct {
+		file         io.ReadWriter
+		maxMemoryAge int64
+		Brain        Brain
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "New and old",
+			fields: fields{
+				maxMemoryAge: 0,
+				file:         bytes.NewBuffer([]byte(`{"Memory":{"myMemory":0,"myOtherMemory":1}}`)),
+			},
+		},
+		{
+			name: "Keep it all",
+			fields: fields{
+				maxMemoryAge: -1,
+				file:         bytes.NewBuffer([]byte(`{"Memory":{"myMemory":0,"myOtherMemory":1}}`)),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &JsonBrain{
+				maxMemoryAge: tt.fields.maxMemoryAge,
+				Brain:        tt.fields.Brain,
+			}
+			i := NewBrain(c, nil, nil, logger)
+			i.Connect()
+			i.Load(tt.fields.file)
+
+			if !i.DoYouKnow("myOtherMemory") {
+				t.Fatal("I should know that")
+			}
+
+			i.CleanMemory()
+
+			if i.DoYouKnow("myMemory") {
+				t.Fatal("I should have forgotten that")
+			}
+
+			if !i.DoYouKnow("myOtherMemory") {
+				t.Fatal("I should have remembered that")
 			}
 		})
 	}
