@@ -7,14 +7,30 @@ import (
 )
 
 type File struct {
-	Filename  string
-	Directory string
-	Checksum  string // Checksum is the filesize in bytes, not the best, but works for now
-	Body      io.Reader
+	Body         io.Reader
+	Metadata     map[string]interface{}
+	ChecksumFunc ChecksumFunc
+}
+
+func New(filename, directory string, body io.Reader, cf ChecksumFunc) File {
+	f := File{
+		Body:         body,
+		Metadata:     make(map[string]interface{}),
+		ChecksumFunc: Checksum,
+	}
+
+	f.SetFilename(filename)
+	f.SetDirectory(directory)
+
+	if cf != nil {
+		f.ChecksumFunc = cf
+	}
+
+	return f
 }
 
 func (f File) FullFilePath() string {
-	return path.Join(f.Directory, f.Filename)
+	return path.Join(f.Directory(), f.Filename())
 }
 
 func (f File) Exists() bool {

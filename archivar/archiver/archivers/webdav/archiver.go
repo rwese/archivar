@@ -27,14 +27,14 @@ func (w *WebdavArchiver) Upload(f file.File) (err error) {
 		return
 	}
 
-	uploadFilePath := path.Join(w.UploadDirectory, f.Directory)
-	uploadFile := path.Join(w.UploadDirectory, f.Directory, f.Filename)
+	uploadFilePath := path.Join(w.UploadDirectory, f.Directory())
+	uploadFile := path.Join(w.UploadDirectory, f.Directory(), f.Filename())
 
-	if w.compareChecksum(uploadFile, f.Checksum) {
+	if w.compareChecksum(uploadFile, f.Checksum()) {
 		return nil
 	}
 
-	return w.client.Upload(f.Filename, uploadFilePath, f.Body)
+	return w.client.Upload(f.Filename(), uploadFilePath, f.Body)
 }
 
 func (w *WebdavArchiver) Connect() (err error) {

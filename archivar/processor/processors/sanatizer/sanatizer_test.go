@@ -2,7 +2,6 @@ package sanatizer_test
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 
 	"github.com/rwese/archivar/archivar/processor/processors/sanatizer"
@@ -18,8 +17,18 @@ func TestSanatizeTrim(t *testing.T) {
 	}{
 		"only trim filename": {
 			config: sanatizer.SanatizeConfig{TrimWhitespaces: true},
-			have:   file.File{Filename: " whitespace_before", Directory: "/somepath/ ", Body: bytes.NewReader([]byte(` Testing `))},
-			want:   file.File{Filename: "whitespace_before", Directory: "/somepath/ ", Body: bytes.NewReader([]byte(` Testing `))},
+			have: file.New(
+				"a1b2 ",
+				"/somepath/ ",
+				bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
+			want: file.New(
+				"a1b2",
+				"/somepath/ ",
+				bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
 		},
 	}
 
@@ -28,11 +37,15 @@ func TestSanatizeTrim(t *testing.T) {
 
 		file := fileTest.have
 		f.Process(&file)
-		if !reflect.DeepEqual(file, fileTest.want) {
+		if file.Filename() != fileTest.want.Filename() {
+			t.Fatalf("Failed test '%s'", testName)
+		}
+		if file.Directory() != fileTest.want.Directory() {
 			t.Fatalf("Failed test '%s'", testName)
 		}
 	}
 }
+
 func TestSanatizeCharacterBlacklistRegexs(t *testing.T) {
 	fileTests := map[string]struct {
 		config sanatizer.SanatizeConfig
@@ -41,8 +54,18 @@ func TestSanatizeCharacterBlacklistRegexs(t *testing.T) {
 	}{
 		"simple replace": {
 			config: sanatizer.SanatizeConfig{CharacterBlacklistRegexs: []string{"[0-9]"}},
-			have:   file.File{Filename: "a1b2", Directory: "/somepath/ ", Body: bytes.NewReader([]byte(` Testing `))},
-			want:   file.File{Filename: "ab", Directory: "/somepath/ ", Body: bytes.NewReader([]byte(` Testing `))},
+			have: file.New(
+				"a1b2",
+				"/somepath/ ",
+				bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
+			want: file.New(
+				"ab",
+				"/somepath/ ",
+				bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
 		},
 	}
 
@@ -51,7 +74,7 @@ func TestSanatizeCharacterBlacklistRegexs(t *testing.T) {
 
 		file := fileTest.have
 		f.Process(&file)
-		if !reflect.DeepEqual(file, fileTest.want) {
+		if file.Filename() != fileTest.want.Filename() {
 			t.Fatalf("Failed test '%s'", testName)
 		}
 	}

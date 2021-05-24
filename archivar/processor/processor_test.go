@@ -2,7 +2,6 @@ package processor_test
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 
 	"github.com/rwese/archivar/archivar/processor/processors/sanatizer"
@@ -18,8 +17,18 @@ func TestProcessor(t *testing.T) {
 	}{
 		"only trim filename": {
 			config: sanatizer.SanatizeConfig{TrimWhitespaces: true},
-			have:   file.File{Filename: " whitespace_before", Directory: "/somepath/ ", Body: bytes.NewReader([]byte(` Testing `))},
-			want:   file.File{Filename: "whitespace_before", Directory: "/somepath/ ", Body: bytes.NewReader([]byte(` Testing `))},
+			have: file.New(
+				" whitespace_before",
+				"/somepath/ ",
+				bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
+			want: file.New(
+				"whitespace_before",
+				"/somepath/ ",
+				bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
 		},
 	}
 
@@ -28,7 +37,10 @@ func TestProcessor(t *testing.T) {
 
 		file := fileTest.have
 		f.Process(&file)
-		if !reflect.DeepEqual(file, fileTest.want) {
+		if file.Filename() != fileTest.want.Filename() {
+			t.Fatalf("Failed test '%s'", testName)
+		}
+		if file.Directory() != fileTest.want.Directory() {
 			t.Fatalf("Failed test '%s'", testName)
 		}
 	}

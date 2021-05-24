@@ -62,7 +62,7 @@ func (f Encrypter) Process(file *file.File) (err error) {
 	file.Body = bytes.NewReader(encrypted)
 
 	if !f.dontRename {
-		file.Filename = file.Filename + f.encryptedFileExtension
+		file.SetFilename(file.Filename() + f.encryptedFileExtension)
 	}
 
 	return nil

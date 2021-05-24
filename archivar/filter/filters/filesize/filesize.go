@@ -51,7 +51,7 @@ func (f *filesize) Filter(file *file.File) (result filterResult.Results, err err
 	if f.MaxSizeBytes > 0 {
 		fileSize, err = io.CopyN(sizeReader, file.Body, f.MaxSizeBytes+1)
 		if fileSize >= f.MaxSizeBytes && !errors.Is(err, io.EOF) {
-			f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", file.Filename)
+			f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", file.Filename())
 			return filterResult.Reject, nil
 		}
 	} else {
@@ -59,10 +59,10 @@ func (f *filesize) Filter(file *file.File) (result filterResult.Results, err err
 	}
 
 	if f.MinSizeBytes >= 0 && fileSize < f.MinSizeBytes {
-		f.logger.Debugf("Filesize: Reject MinSizeBytes %s", file.Filename)
+		f.logger.Debugf("Filesize: Reject MinSizeBytes %s", file.Filename())
 		result = filterResult.Reject
 	} else {
-		f.logger.Debugf("Filesize: Fallthrough %s", file.Filename)
+		f.logger.Debugf("Filesize: Fallthrough %s", file.Filename())
 		result = filterResult.Allow
 		file.Body = bytes.NewReader(buffer.Bytes())
 	}

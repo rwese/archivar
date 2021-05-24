@@ -137,11 +137,12 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 			continue
 		}
 
-		file := file.File{
-			Filename:  filename,
-			Directory: filePrefixPath,
-			Body:      p.Body,
-		}
+		file := file.New(
+			filename,
+			filePrefixPath,
+			p.Body,
+			nil,
+		)
 
 		if err = upload(file); err != nil {
 			return err

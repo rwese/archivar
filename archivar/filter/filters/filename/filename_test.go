@@ -1,8 +1,6 @@
 package filename_test
 
 import (
-	"bytes"
-	"reflect"
 	"testing"
 
 	"github.com/rwese/archivar/archivar/filter/filterResult"
@@ -28,8 +26,18 @@ func TestFilenameAccept(t *testing.T) {
 					"^allowme$",
 				},
 			},
-			have:   file.File{Filename: "allowme", Directory: "/somepath/", Body: bytes.NewReader([]byte(` Testing `))},
-			want:   file.File{Filename: "allowme", Directory: "/somepath/", Body: bytes.NewReader([]byte(` Testing `))},
+			have: file.New(
+				"allowme",
+				"/somepath/",
+				nil, // bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
+			want: file.New(
+				"allowme",
+				"/somepath/",
+				nil, // bytes.NewReader([]byte(` Testing `)),
+				nil,
+			),
 			result: filterResult.Allow,
 		},
 		"allow_reject": {
@@ -41,8 +49,12 @@ func TestFilenameAccept(t *testing.T) {
 					"^reject$",
 				},
 			},
-			have:   file.File{Filename: "reject"},
-			want:   file.File{Filename: "reject"},
+			have: file.New(
+				"reject", "", nil, nil,
+			),
+			want: file.New(
+				"reject", "", nil, nil,
+			),
 			result: filterResult.Reject,
 		},
 		"reject": {
@@ -51,8 +63,12 @@ func TestFilenameAccept(t *testing.T) {
 					"^reject$",
 				},
 			},
-			have:   file.File{Filename: "reject"},
-			want:   file.File{Filename: "reject"},
+			have: file.New(
+				"reject", "", nil, nil,
+			),
+			want: file.New(
+				"reject", "", nil, nil,
+			),
 			result: filterResult.Reject,
 		},
 		"rejectPArtialRegex": {
@@ -61,8 +77,12 @@ func TestFilenameAccept(t *testing.T) {
 					"reject",
 				},
 			},
-			have:   file.File{Filename: "rejectThis"},
-			want:   file.File{Filename: "rejectThis"},
+			have: file.New(
+				"rejectThis", "", nil, nil,
+			),
+			want: file.New(
+				"rejectThis", "", nil, nil,
+			),
 			result: filterResult.Reject,
 		},
 	}
@@ -78,10 +98,6 @@ func TestFilenameAccept(t *testing.T) {
 
 		if fileTest.wantErr && err == nil {
 			t.Fatalf("'%s' wantErr", testName)
-		}
-
-		if !reflect.DeepEqual(file, fileTest.want) && !fileTest.wantErr && result != filterResult.Reject {
-			t.Fatalf("'%s' Failed test missmatch", testName)
 		}
 	}
 }

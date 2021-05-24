@@ -106,11 +106,12 @@ func (f *FileSystem) listFilesRecursive(rootdirectory, directory string) ([]file
 		}
 
 		cleanDirectory := strings.TrimSuffix(directory, rootdirectory)
-		files = append(files, file.File{
-			Filename:  fentry.Name(),
-			Directory: cleanDirectory,
-			Body:      fh,
-		})
+		files = append(files, file.New(
+			fentry.Name(),
+			cleanDirectory,
+			fh,
+			nil,
+		))
 	}
 
 	return files, nil

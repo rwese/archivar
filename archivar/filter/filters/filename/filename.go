@@ -50,19 +50,19 @@ func New(c interface{}, logger *logrus.Logger) filters.Filter {
 
 func (filename *Filename) Filter(f *file.File) (filterResult.Results, error) {
 	for _, allow := range filename.allow {
-		if allow.Match([]byte(f.Filename)) {
-			filename.logger.Debugf("Filename: Allow %s", f.Filename)
+		if allow.Match([]byte(f.Filename())) {
+			filename.logger.Debugf("Filename: Allow %s", f.Filename())
 			return filterResult.Allow, nil
 		}
 	}
 
 	for _, reject := range filename.reject {
-		if reject.Match([]byte(f.Filename)) {
-			filename.logger.Debugf("Filename: Reject %s", f.Filename)
+		if reject.Match([]byte(f.Filename())) {
+			filename.logger.Debugf("Filename: Reject %s", f.Filename())
 			return filterResult.Reject, nil
 		}
 	}
 
-	filename.logger.Debugf("Filename: Miss %s", f.Filename)
+	filename.logger.Debugf("Filename: Miss %s", f.Filename())
 	return filterResult.Miss, nil
 }

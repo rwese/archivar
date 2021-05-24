@@ -42,7 +42,7 @@ func New(c interface{}, logger *logrus.Logger) processors.Processor {
 }
 
 func (f Sanatize) Process(file *file.File) error {
-	file.Filename = f.sanatize(file.Filename)
+	file.SetFilename(f.sanatize(file.Filename()))
 	return nil
 }
 

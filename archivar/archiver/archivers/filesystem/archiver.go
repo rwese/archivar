@@ -39,10 +39,10 @@ func NewArchiver(c interface{}, logger *logrus.Logger) archivers.Archiver {
 
 // Upload takes filename, fileDirectory and fileHandle stores it on the filesystem
 func (fsystem *FileSystemArchiver) Upload(f file.File) (err error) {
-	uploadFilePath := path.Join(fsystem.directory, f.Directory)
-	fsystem.logger.Debugf("Storing file '%s' at '%s'", f.Filename, uploadFilePath)
+	uploadFilePath := path.Join(fsystem.directory, f.Directory())
+	fsystem.logger.Debugf("Storing file '%s' at '%s'", f.Filename(), uploadFilePath)
 
-	return fsystem.client.Upload(f.Filename, uploadFilePath, f.Body)
+	return fsystem.client.Upload(f.Filename(), uploadFilePath, f.Body)
 }
 
 // Connect exists only to satisfy the archiver interface
