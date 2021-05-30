@@ -11,6 +11,7 @@ import (
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/emersion/go-message/charset"
 	"github.com/emersion/go-message/mail"
 	"github.com/rwese/archivar/archivar/archiver/archivers"
 	"github.com/rwese/archivar/internal/file"
@@ -41,6 +42,8 @@ func New(server, username, password, inbox string, allowInsecureSSL bool, logger
 
 	i.section = &imap.BodySectionName{}
 	i.items = []imap.FetchItem{i.section.FetchItem()}
+	imap.CharsetReader = charset.Reader
+
 	return i
 }
 
@@ -137,14 +140,14 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 			continue
 		}
 
-		file := file.New(
+		f := file.New(
 			filename,
 			filePrefixPath,
 			p.Body,
 			nil,
 		)
 
-		if err = upload(file); err != nil {
+		if err = upload(f); err != nil {
 			return err
 		}
 	}
