@@ -1,31 +1,49 @@
 package file
 
 import (
+	"bytes"
+	"encoding/base64"
 	"errors"
+	"io"
+	"time"
 )
 
+var errNotFound = errors.New("key not set")
 var errStoredValueNotParsable = errors.New("stored data is not usable as the requested type")
 var errKeyIsReserved = errors.New("key is reserved")
 
 type ChecksumFunc func(File) (checksum string)
 
-const MetaDataFilename = "Filename"
-const MetaDataDirectory = "Directory"
-const MetaDataChecksum = "Checksum"
+const (
+	MetaDataBody      = "Body"
+	MetaDataFilename  = "Filename"
+	MetaDataDirectory = "Directory"
+	MetaDataChecksum  = "Checksum"
+	MetaDataCreatedAt = "CreatedAt"
+	MetaDataChangedAt = "ChangedAt"
+)
 
 var reservedKeys = map[string]bool{
+	MetaDataBody:      true,
 	MetaDataFilename:  true,
 	MetaDataDirectory: true,
 	MetaDataChecksum:  true,
+	MetaDataCreatedAt: true,
+	MetaDataChangedAt: true,
 }
 
-func (f *File) SetMetadata(key string, data interface{}) (err error) {
-	if _, exists := reservedKeys[key]; exists {
-		return errKeyIsReserved
+func (f *File) SetMetadataTime(key string, data time.Time) *File {
+	f.Metadata[key] = data
+	return f
+}
+
+func (f *File) getMetadataTime(key string) (stored time.Time, err error) {
+	storedMetadata, ok := f.Metadata[key]
+	if !ok {
+		return time.Time{}, errNotFound
 	}
 
-	f.setMetadataString(key, data)
-	return
+	return storedMetadata.(time.Time), nil
 }
 
 func (f *File) setMetadataString(key string, data interface{}) {
@@ -59,32 +77,6 @@ func (f *File) GetMetadataString(key string) (data string, err error) {
 	return
 }
 
-func (f *File) SetFilename(Filename string) {
-	f.setMetadataString(MetaDataFilename, Filename)
-}
-
-func (f *File) SetDirectory(Directory string) {
-	f.setMetadataString(MetaDataDirectory, Directory)
-}
-
-func (f *File) Filename() string {
-	data, err := f.GetMetadataString(MetaDataFilename)
-	if err != nil {
-		return ""
-	}
-
-	return data
-}
-
-func (f *File) Directory() string {
-	data, err := f.GetMetadataString(MetaDataDirectory)
-	if err != nil {
-		return ""
-	}
-
-	return data
-}
-
 func Checksum(f File) (checksum string) {
 	return
 }
@@ -97,6 +89,63 @@ func (f File) Checksum() (checksum string) {
 	return f.ChecksumFunc(f)
 }
 
-func FileChanged(a, b File) bool {
+func ChecksumChanged(a, b File) bool {
 	return a.Checksum() != b.Checksum()
+}
+
+type Metadata func(f *File)
+
+func (f *File) SetMetadata(metadata ...Metadata) {
+	for _, m := range metadata {
+		m(f)
+	}
+}
+
+func WithChecksumFunc(checksumFunc ChecksumFunc) Metadata {
+	return func(f *File) {
+		f.ChecksumFunc = checksumFunc
+	}
+}
+
+func WithContent(content io.Reader) Metadata {
+	return func(f *File) {
+		f.Body = content
+	}
+}
+func WithContentBase64Encoded(content io.Reader) Metadata {
+	return func(f *File) {
+		c, _ := io.ReadAll(content)
+		decodedContent, _ := base64.StdEncoding.DecodeString(string(c))
+		f.Body = io.MultiReader(bytes.NewReader(decodedContent))
+	}
+}
+
+func WithContentPointer(content *io.Reader) Metadata {
+	return func(f *File) {
+		f.Body = *content
+	}
+}
+
+func WithChangedAt(at time.Time) Metadata {
+	return func(f *File) {
+		f.SetMetadataTime(MetaDataChangedAt, at)
+	}
+}
+
+func WithCreatedAt(createdAt time.Time) Metadata {
+	return func(f *File) {
+		f.SetMetadataTime(MetaDataCreatedAt, createdAt)
+	}
+}
+
+func WithDirectory(dir string) Metadata {
+	return func(f *File) {
+		f.setMetadataString(MetaDataDirectory, dir)
+	}
+}
+
+func WithFilename(filename string) Metadata {
+	return func(f *File) {
+		f.setMetadataString(MetaDataFilename, filename)
+	}
 }

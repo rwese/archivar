@@ -73,7 +73,7 @@ func (i *Imap) Disconnect() (err error) {
 	return i.client.Logout()
 }
 
-func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) error {
+func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) error {
 	r := msg.GetBody(i.section)
 
 	m, err := mail.CreateReader(r)
@@ -141,10 +141,10 @@ func (i Imap) ProcessMessage(msg imap.Message, upload archivers.UploadFunc) erro
 		}
 
 		f := file.New(
-			filename,
-			filePrefixPath,
-			p.Body,
-			nil,
+			file.WithContent(p.Body),
+			file.WithFilename(filename),
+			file.WithDirectory(filePrefixPath),
+			file.WithCreatedAt(mailData.date),
 		)
 
 		if err = upload(f); err != nil {

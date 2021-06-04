@@ -17,8 +17,8 @@ type processorArchiver struct {
 	processor processors.Processor
 }
 
-func (f *processorArchiver) Upload(file file.File) (err error) {
-	err = f.processor.Process(&file)
+func (f *processorArchiver) Upload(file *file.File) (err error) {
+	err = f.processor.Process(file)
 	if err != nil {
 		return err
 	}

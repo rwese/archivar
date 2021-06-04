@@ -26,17 +26,13 @@ func TestFilenameAccept(t *testing.T) {
 					"^allowme$",
 				},
 			},
-			have: file.New(
-				"allowme",
-				"/somepath/",
-				nil, // bytes.NewReader([]byte(` Testing `)),
-				nil,
+			have: *file.New(
+				file.WithFilename("allowme"),
+				file.WithDirectory("/somepath/"),
 			),
-			want: file.New(
-				"allowme",
-				"/somepath/",
-				nil, // bytes.NewReader([]byte(` Testing `)),
-				nil,
+			want: *file.New(
+				file.WithFilename("allowme"),
+				file.WithDirectory("/somepath/"),
 			),
 			result: filterResult.Allow,
 		},
@@ -49,11 +45,13 @@ func TestFilenameAccept(t *testing.T) {
 					"^reject$",
 				},
 			},
-			have: file.New(
-				"reject", "", nil, nil,
+			have: *file.New(
+				file.WithFilename("reject"),
+				file.WithDirectory(""),
 			),
-			want: file.New(
-				"reject", "", nil, nil,
+			want: *file.New(
+				file.WithFilename("reject"),
+				file.WithDirectory(""),
 			),
 			result: filterResult.Reject,
 		},
@@ -63,25 +61,29 @@ func TestFilenameAccept(t *testing.T) {
 					"^reject$",
 				},
 			},
-			have: file.New(
-				"reject", "", nil, nil,
+			have: *file.New(
+				file.WithFilename("reject"),
+				file.WithDirectory(""),
 			),
-			want: file.New(
-				"reject", "", nil, nil,
+			want: *file.New(
+				file.WithFilename("reject"),
+				file.WithDirectory(""),
 			),
 			result: filterResult.Reject,
 		},
-		"rejectPArtialRegex": {
+		"rejectPartialRegex": {
 			config: filename.FilenameConfig{
 				Reject: []string{
 					"reject",
 				},
 			},
-			have: file.New(
-				"rejectThis", "", nil, nil,
+			have: *file.New(
+				file.WithFilename("rejectThis"),
+				file.WithDirectory(""),
 			),
-			want: file.New(
-				"rejectThis", "", nil, nil,
+			want: *file.New(
+				file.WithFilename("rejectThis"),
+				file.WithDirectory(""),
 			),
 			result: filterResult.Reject,
 		},

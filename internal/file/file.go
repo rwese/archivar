@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
+	"time"
 )
 
 type File struct {
@@ -12,18 +14,14 @@ type File struct {
 	ChecksumFunc ChecksumFunc
 }
 
-func New(filename, directory string, body io.Reader, cf ChecksumFunc) File {
-	f := File{
-		Body:         body,
+func New(metadata ...Metadata) *File {
+	f := &File{
 		Metadata:     make(map[string]interface{}),
 		ChecksumFunc: Checksum,
 	}
 
-	f.SetFilename(filename)
-	f.SetDirectory(directory)
-
-	if cf != nil {
-		f.ChecksumFunc = cf
+	for _, m := range metadata {
+		m(f)
 	}
 
 	return f
@@ -39,4 +37,39 @@ func (f File) Exists() bool {
 	}
 
 	return true
+}
+
+func (f *File) Filename() string {
+	data, err := f.GetMetadataString(MetaDataFilename)
+	if err != nil {
+		return ""
+	}
+
+	return data
+}
+
+func (f *File) SetFilename(Filename string) {
+	Filename = strings.ReplaceAll(Filename, "/", "_")
+	f.setMetadataString(MetaDataFilename, Filename)
+}
+
+func (f *File) SetDirectory(Directory string) {
+	f.setMetadataString(MetaDataDirectory, Directory)
+}
+
+func (f *File) Directory() string {
+	data, err := f.GetMetadataString(MetaDataDirectory)
+	if err != nil {
+		return ""
+	}
+
+	return data
+}
+
+func (f *File) SetChangedAt(t time.Time) {
+	f.SetMetadataTime(MetaDataCreatedAt, t)
+}
+
+func (f *File) ChangedAt() (time.Time, error) {
+	return f.getMetadataTime(MetaDataCreatedAt)
 }

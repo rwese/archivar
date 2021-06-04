@@ -60,7 +60,7 @@ func (i ImapGatherer) Download() (err error) {
 
 	readMsgSeq := new(imap.SeqSet)
 	for msg := range messages {
-		err := i.client.ProcessMessage(*msg, i.storage.Upload)
+		err := i.client.ProcessMessage(msg, i.storage.Upload)
 		if err != nil {
 			i.logger.Warnf("Failed to process message: %s", err.Error())
 			continue

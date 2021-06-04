@@ -11,11 +11,11 @@ type archiverFactory func(c interface{}, logger *logrus.Logger) Archiver
 var registeredArchiver = make(map[string]archiverFactory)
 
 // UploadFunc takes a file and uploads it to their archive backend
-type UploadFunc func(file.File) (err error)
+type UploadFunc func(*file.File) (err error)
 
 // Archiver is used to store files in their archive backend
 type Archiver interface {
-	Upload(file.File) (err error)
+	Upload(*file.File) (err error)
 	Connect() (err error)
 }
 

@@ -17,17 +17,15 @@ func TestSanatizeTrim(t *testing.T) {
 	}{
 		"only trim filename": {
 			config: sanatizer.SanatizeConfig{TrimWhitespaces: true},
-			have: file.New(
-				"a1b2 ",
-				"/somepath/ ",
-				bytes.NewReader([]byte(` Testing `)),
-				nil,
+			have: *file.New(
+				file.WithContent(bytes.NewReader([]byte(` Testing `))),
+				file.WithFilename("a1b2 "),
+				file.WithDirectory("/somepath/ "),
 			),
-			want: file.New(
-				"a1b2",
-				"/somepath/ ",
-				bytes.NewReader([]byte(` Testing `)),
-				nil,
+			want: *file.New(
+				file.WithContent(bytes.NewReader([]byte(` Testing `))),
+				file.WithFilename("a1b2"),
+				file.WithDirectory("/somepath/ "),
 			),
 		},
 	}
@@ -54,17 +52,15 @@ func TestSanatizeCharacterBlacklistRegexs(t *testing.T) {
 	}{
 		"simple replace": {
 			config: sanatizer.SanatizeConfig{CharacterBlacklistRegexs: []string{"[0-9]"}},
-			have: file.New(
-				"a1b2",
-				"/somepath/ ",
-				bytes.NewReader([]byte(` Testing `)),
-				nil,
+			have: *file.New(
+				file.WithContent(bytes.NewReader([]byte(` Testing `))),
+				file.WithFilename("a1b2"),
+				file.WithDirectory("/somepath/ "),
 			),
-			want: file.New(
-				"ab",
-				"/somepath/ ",
-				bytes.NewReader([]byte(` Testing `)),
-				nil,
+			want: *file.New(
+				file.WithContent(bytes.NewReader([]byte(` Testing `))),
+				file.WithFilename("ab"),
+				file.WithDirectory("/somepath/ "),
 			),
 		},
 	}

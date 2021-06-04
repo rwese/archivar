@@ -53,9 +53,9 @@ func (w *Webdav) downloadFilesRecursive(rootDirectory, directory string, upload 
 
 		relativeDirectory := strings.TrimPrefix(directory, rootDirectory)
 		newFile := file.New(
-			f.Name(),
-			relativeDirectory,
-			fh,
+			file.WithContent(fh),
+			file.WithFilename(f.Name()),
+			file.WithDirectory(relativeDirectory),
 			nil,
 		)
 

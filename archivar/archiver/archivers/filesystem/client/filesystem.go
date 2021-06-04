@@ -58,7 +58,7 @@ func (f *FileSystem) DownloadFiles(d string, upload archivers.UploadFunc) (err e
 	return
 }
 
-func (f *FileSystem) DownloadFile(file file.File, upload archivers.UploadFunc) error {
+func (f *FileSystem) DownloadFile(file *file.File, upload archivers.UploadFunc) error {
 	return upload(file)
 }
 
@@ -76,17 +76,17 @@ func (f *FileSystem) DeleteFiles(files []string) (err error) {
 	return
 }
 
-func (f *FileSystem) ListFiles(directory string) ([]file.File, error) {
+func (f *FileSystem) ListFiles(directory string) ([]*file.File, error) {
 	return f.listFilesRecursive(directory, directory)
 }
 
-func (f *FileSystem) listFilesRecursive(rootdirectory, directory string) ([]file.File, error) {
+func (f *FileSystem) listFilesRecursive(rootdirectory, directory string) ([]*file.File, error) {
 	dir, err := os.ReadDir(directory)
 	if err != nil {
 		return nil, err
 	}
 
-	var files []file.File
+	var files []*file.File
 	for _, fentry := range dir {
 		fullPath := path.Join(directory, fentry.Name())
 
@@ -107,11 +107,11 @@ func (f *FileSystem) listFilesRecursive(rootdirectory, directory string) ([]file
 
 		cleanDirectory := strings.TrimSuffix(directory, rootdirectory)
 		files = append(files, file.New(
-			fentry.Name(),
-			cleanDirectory,
-			fh,
-			nil,
-		))
+			file.WithContent(fh),
+			file.WithDirectory(cleanDirectory),
+			file.WithFilename(fentry.Name()),
+		),
+		)
 	}
 
 	return files, nil

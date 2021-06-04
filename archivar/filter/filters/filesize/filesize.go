@@ -44,28 +44,39 @@ func New(c interface{}, logger *logrus.Logger) filters.Filter {
 	return f
 }
 
-func (f *filesize) Filter(file *file.File) (result filterResult.Results, err error) {
-	var buffer bytes.Buffer
+func (f *filesize) Filter(filterFile *file.File) (result filterResult.Results, err error) {
+	var b bytes.Buffer
 	var fileSize int64
-	sizeReader := io.MultiWriter(&buffer)
+	sizeReader := io.TeeReader(filterFile.Body, &b)
 	if f.MaxSizeBytes > 0 {
-		fileSize, err = io.CopyN(sizeReader, file.Body, f.MaxSizeBytes+1)
-		if fileSize >= f.MaxSizeBytes && !errors.Is(err, io.EOF) {
-			f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", file.Filename())
+		limitReader := io.LimitReader(sizeReader, f.MaxSizeBytes+1)
+		readBytes, err := io.ReadAll(limitReader)
+		if err != nil {
+			return filterResult.Allow, err
+		}
+		fileSize = int64(len(readBytes))
+		if fileSize > f.MaxSizeBytes && !errors.Is(err, io.EOF) {
+			f.logger.Debugf("Filesize: Reject MaxSizeBytes %s", filterFile.Filename())
 			return filterResult.Reject, nil
 		}
-	} else {
-		fileSize, err = io.Copy(sizeReader, file.Body)
 	}
 
 	if f.MinSizeBytes >= 0 && fileSize < f.MinSizeBytes {
-		f.logger.Debugf("Filesize: Reject MinSizeBytes %s", file.Filename())
-		result = filterResult.Reject
-	} else {
-		f.logger.Debugf("Filesize: Fallthrough %s", file.Filename())
-		result = filterResult.Allow
-		file.Body = bytes.NewReader(buffer.Bytes())
+		leastb := make([]byte, int(f.MinSizeBytes))
+
+		_, err := io.ReadAtLeast(sizeReader, leastb, int(f.MinSizeBytes))
+		if err != nil {
+			f.logger.Debugf("Filesize: Reject MinSizeBytes %s", filterFile.Filename())
+			return filterResult.Reject, nil
+		}
 	}
 
-	return
+	if _, err = io.ReadAll(sizeReader); err != nil {
+		return filterResult.Reject, err
+	}
+
+	f.logger.Debugf("Filesize: Fallthrough %s", filterFile.Filename())
+	filterFile.SetMetadata(file.WithContent(bytes.NewReader(b.Bytes())))
+
+	return filterResult.Allow, nil
 }

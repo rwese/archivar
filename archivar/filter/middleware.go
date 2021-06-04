@@ -18,8 +18,8 @@ type filterArchiver struct {
 	filter filters.Filter
 }
 
-func (f *filterArchiver) Upload(file file.File) (err error) {
-	result, err := f.filter.Filter(&file)
+func (f *filterArchiver) Upload(file *file.File) (err error) {
+	result, err := f.filter.Filter(file)
 	if err != nil {
 		return err
 	}

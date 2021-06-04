@@ -22,7 +22,7 @@ func NewArchiver(c interface{}, logger *logrus.Logger) archivers.Archiver {
 }
 
 // Upload takes filename, fileDirectory and fileHandle to push the data directly to the webdav
-func (w *WebdavArchiver) Upload(f file.File) (err error) {
+func (w *WebdavArchiver) Upload(f *file.File) (err error) {
 	if err = w.Connect(); err != nil {
 		return
 	}
@@ -34,14 +34,14 @@ func (w *WebdavArchiver) Upload(f file.File) (err error) {
 		return nil
 	}
 
-	return w.client.Upload(f.Filename(), uploadFilePath, f.Body)
+	return w.client.Upload(f.Filename(), uploadFilePath, &f.Body)
 }
 
 func (w *WebdavArchiver) Connect() (err error) {
 	return w.client.Connect()
 }
 
-func (w *WebdavArchiver) compareChecksum(fileNameDst string, fileSrc file.File) bool {
+func (w *WebdavArchiver) compareChecksum(fileNameDst string, fileSrc *file.File) bool {
 	if fileSrc.Checksum() == "" {
 		return false
 	}
@@ -51,7 +51,8 @@ func (w *WebdavArchiver) compareChecksum(fileNameDst string, fileSrc file.File) 
 		return false
 	}
 
-	fileDst := file.New(fs.Name(), "", nil, nil)
+	// TODO add proper filesize/changeddate comparision
+	fileDst := file.New(nil)
 	fileDst.ChecksumFunc = fileSrc.ChecksumFunc
 
 	err = fileDst.SetMetadataString("Filesize", fmt.Sprintf("%d", fs.Size()))

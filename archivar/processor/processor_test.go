@@ -17,17 +17,15 @@ func TestProcessor(t *testing.T) {
 	}{
 		"only trim filename": {
 			config: sanatizer.SanatizeConfig{TrimWhitespaces: true},
-			have: file.New(
-				" whitespace_before",
-				"/somepath/ ",
-				bytes.NewReader([]byte(` Testing `)),
-				nil,
+			have: *file.New(
+				file.WithContent(bytes.NewReader([]byte(` Testing `))),
+				file.WithFilename(" whitespace_before"),
+				file.WithDirectory("/somepath/ "),
 			),
-			want: file.New(
-				"whitespace_before",
-				"/somepath/ ",
-				bytes.NewReader([]byte(` Testing `)),
-				nil,
+			want: *file.New(
+				file.WithContent(bytes.NewReader([]byte(` Testing `))),
+				file.WithFilename("whitespace_before"),
+				file.WithDirectory("/somepath/ "),
 			),
 		},
 	}

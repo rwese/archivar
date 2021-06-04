@@ -32,8 +32,9 @@ func init() {
 }
 
 func New(c interface{}, logger *logrus.Logger) processors.Processor {
-	var pc EncrypterConfig
-	pc.AddExtension = ".encrypted"
+	pc := EncrypterConfig{
+		AddExtension: ".encrypted",
+	}
 
 	config.ConfigFromStruct(c, &pc)
 
@@ -59,7 +60,8 @@ func (f Encrypter) Process(file *file.File) (err error) {
 		return
 	}
 
-	file.Body = bytes.NewReader(encrypted)
+	reader := io.MultiReader(bytes.NewReader(encrypted))
+	file.Body = reader
 
 	if !f.dontRename {
 		file.SetFilename(file.Filename() + f.encryptedFileExtension)
