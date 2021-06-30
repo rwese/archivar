@@ -203,7 +203,7 @@ func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
 	return
 }
 
-func (i *Imap) GetMessages(messages chan *imap.Message, done chan error, deleteDownloaded bool) (err error) {
+func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool) (err error) {
 	i.Connect()
 
 	mbox, err := i.client.Select(i.inbox, false)
@@ -226,7 +226,9 @@ func (i *Imap) GetMessages(messages chan *imap.Message, done chan error, deleteD
 	seqset.AddNum(foundMsgs...)
 
 	go func() {
-		done <- i.client.Fetch(seqset, i.items, messages)
+		if err := i.client.Fetch(seqset, i.items, messageChan); err != nil {
+			i.logger.Warnf("failed to fetch from imap %v", err)
+		}
 	}()
 
 	return nil

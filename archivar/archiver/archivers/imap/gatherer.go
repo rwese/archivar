@@ -48,13 +48,8 @@ func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logge
 }
 
 func (i ImapGatherer) Download() (err error) {
-	done := make(chan error, 1)
-	messages := make(chan *imap.Message, 10)
-	if err = i.client.GetMessages(messages, done, i.deleteDownloaded); err != nil {
-		return
-	}
-
-	if err = <-done; err != nil {
+	messages := make(chan *imap.Message, 1)
+	if err = i.client.GetMessages(messages, i.deleteDownloaded); err != nil {
 		return
 	}
 
