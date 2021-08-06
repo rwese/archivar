@@ -49,19 +49,23 @@ func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logge
 
 func (i ImapGatherer) Download() (err error) {
 	messages := make(chan *imap.Message, 1)
-	if err = i.client.GetMessages(messages, i.deleteDownloaded); err != nil {
-		return
-	}
 
 	readMsgSeq := new(imap.SeqSet)
-	for msg := range messages {
-		err := i.client.ProcessMessage(msg, i.storage.Upload)
-		if err != nil {
-			i.logger.Warnf("Failed to process message: %s", err.Error())
-			continue
-		}
 
-		readMsgSeq.AddNum(msg.SeqNum)
+	go func() {
+		for msg := range messages {
+			err := i.client.ProcessMessage(msg, i.storage.Upload)
+			if err != nil {
+				i.logger.Warnf("Failed to process message: %s", err.Error())
+				continue
+			}
+
+			readMsgSeq.AddNum(msg.SeqNum)
+		}
+	}()
+
+	if err = i.client.GetMessages(messages, i.deleteDownloaded); err != nil {
+		return
 	}
 
 	if i.deleteDownloaded {
