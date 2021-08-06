@@ -68,7 +68,7 @@ func (i ImapGatherer) Download() (err error) {
 		return
 	}
 
-	if i.deleteDownloaded {
+	if i.deleteDownloaded && !readMsgSeq.Empty() {
 		i.logger.Debug("deleting processed messages")
 
 		if err = i.client.FlagAndDeleteMessages(readMsgSeq); err != nil {
