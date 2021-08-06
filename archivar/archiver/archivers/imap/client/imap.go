@@ -218,7 +218,7 @@ func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool
 	foundMsgs, err := i.client.Search(criteria)
 	if mbox.Messages == 0 {
 		i.logger.Debug("no messages")
-		return
+		return nil
 	}
 
 	i.logger.Debugf("found %d messages", len(foundMsgs))
