@@ -164,6 +164,8 @@ Gatherers:
 Gatherers:
   <gatherer_name>:
     Type: imap
+    Inbox: INBOX // is the default
+    InboxPrefix: gmail_label // every gmail label starting with
     Config:
       Server: server:993
       Username:

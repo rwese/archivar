@@ -23,6 +23,8 @@ type Imap struct {
 	username         string
 	password         string
 	inbox            string
+	inboxPrefix      string
+	processingInbox  string
 	allowInsecureSSL bool
 	client           *client.Client
 	section          *imap.BodySectionName
@@ -30,12 +32,13 @@ type Imap struct {
 	logger           *logrus.Logger
 }
 
-func New(server, username, password, inbox string, allowInsecureSSL bool, logger *logrus.Logger) *Imap {
+func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL bool, logger *logrus.Logger) *Imap {
 	i := &Imap{
 		server:           server,
 		username:         username,
 		password:         password,
 		inbox:            inbox,
+		inboxPrefix:      inboxPrefix,
 		allowInsecureSSL: allowInsecureSSL,
 		logger:           logger,
 	}
@@ -96,7 +99,7 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 		mailData.subject = subject
 	}
 
-	filePrefixPath := mailData.getFilePath()
+	filePrefixPath := mailData.getFilePath(i.processingInbox, true, true)
 
 	if err != nil {
 		log.Fatal(err)
@@ -166,7 +169,7 @@ var subjectCleanup = regexp.MustCompile(`[^a-zA-Z0-9\-_ ]+`)
 
 const SUBJECT_LENGTH = 30
 
-func (m mailData) getFilePath() string {
+func (m mailData) getFilePath(inbox string, addPlusStringToPath, addInboxToPath bool) string {
 	// TODO add variant options
 	timestamp := fmt.Sprintf(
 		"%04d%02d%02d_%02d%02d%02d",
@@ -178,15 +181,19 @@ func (m mailData) getFilePath() string {
 		m.date.Second(),
 	)
 
-	rootDirectory := m.to.Address
-	foundPlusString := emailPlusPart.FindSubmatch([]byte(m.to.String()))
-	if len(foundPlusString) > 1 {
-		rootDirectory = string(foundPlusString[1])
+	pathParts := []string{}
+	pathParts = append(pathParts, inbox)
+	pathParts = append(pathParts, m.to.Address)
+	if addPlusStringToPath {
+		foundPlusString := emailPlusPart.FindSubmatch([]byte(m.to.String()))
+		if len(foundPlusString) > 1 {
+			pathParts = append(pathParts, string(foundPlusString[1]))
+		}
 	}
 
-	subjectCleanupPath := subjectCleanup.ReplaceAllString(m.subject, "")
+	pathParts = append(pathParts, subjectCleanup.ReplaceAllString(timestamp+"-"+m.subject, ""))
 
-	return path.Join(rootDirectory, timestamp+"_"+subjectCleanupPath)
+	return path.Join(pathParts...)
 }
 
 func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
@@ -202,20 +209,76 @@ func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
 
 	return
 }
+func (i *Imap) getInboxesByPrefix(prefix string) []string {
+	i.Connect()
+	mailboxes := make(chan *imap.MailboxInfo, 10)
+	done := make(chan error, 1)
+	go func() {
+		done <- i.client.List("", prefix+"*", mailboxes)
+	}()
+
+	inboxes := []string{}
+	for m := range mailboxes {
+		inboxes = append(inboxes, m.Name)
+	}
+
+	return inboxes
+}
+func (i *Imap) ListInboxes() {
+	i.Connect()
+	mailboxes := make(chan *imap.MailboxInfo, 10)
+	done := make(chan error, 1)
+	go func() {
+		done <- i.client.List("", "*", mailboxes)
+	}()
+
+	log.Println("Mailboxes:")
+	for m := range mailboxes {
+		log.Println("* " + m.Name)
+	}
+}
 
 func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool) (err error) {
 	i.Connect()
 
-	mbox, err := i.client.Select(i.inbox, false)
-	if err != nil {
-		return
+	inboxes := []string{}
+	if i.inbox != "" {
+		inboxes = append(inboxes, i.inbox)
 	}
 
-	i.logger.Debugf("selected '%s'", i.inbox)
+	if i.inboxPrefix != "" {
+		inboxes = append(inboxes, i.getInboxesByPrefix(i.inboxPrefix)...)
+	}
+
+	for _, inbox := range inboxes {
+		i.processingInbox = inbox
+
+		err := i.processInboxMessages(inbox, messageChan, deleteDownloaded)
+		if err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message, deleteDownloaded bool) (err error) {
+	mbox, err := i.client.Select(inbox, false)
+	if err != nil {
+		i.ListInboxes()
+		return err
+	}
+
+	i.logger.Debugf("selected '%s'", inbox)
 
 	criteria := imap.NewSearchCriteria()
 	criteria.WithoutFlags = []string{imap.DeletedFlag}
+
 	foundMsgs, err := i.client.Search(criteria)
+	if err != nil {
+		return err
+	}
+
 	if mbox.Messages == 0 {
 		i.logger.Debug("no messages")
 		return nil

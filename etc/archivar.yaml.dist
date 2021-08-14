@@ -49,6 +49,15 @@ Gatherers:
       Password:
       Server: https://server/remote.php/dav/files/username/
       UploadDirectory: /input_directory/
+  imap_gmail_with_prefix_labels:
+    Type: imap
+    InboxPrefix: archivar
+    Config:
+      Server: server:993
+      Username:
+      Password:
+      # DeleteDownloaded: False
+      # AllowInsecureSSL: False
   imap_mail_account:
     Type: imap
     Config:
@@ -57,6 +66,7 @@ Gatherers:
       Password:
       # DeleteDownloaded: False
       # AllowInsecureSSL: False
+      InboxPrefix: archivar
 Processors:  
   superSecretDataEncrypter:
     Type: encrypter

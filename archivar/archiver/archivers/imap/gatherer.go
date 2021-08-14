@@ -14,6 +14,7 @@ type ImapGathererConfig struct {
 	Username         string
 	Password         string
 	Inbox            string
+	InboxPrefix      string
 	AllowInsecureSSL bool
 	DeleteDownloaded bool
 }
@@ -26,11 +27,13 @@ type ImapGatherer struct {
 }
 
 func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logger) (i archivers.Gatherer) {
-	igc := ImapGathererConfig{
-		Inbox: "Inbox",
-	}
+	igc := ImapGathererConfig{}
 
 	config.ConfigFromStruct(c, &igc)
+
+	if igc.Inbox == "" && igc.InboxPrefix == "" {
+		igc.Inbox = "Inbox"
+	}
 
 	return &ImapGatherer{
 		deleteDownloaded: igc.DeleteDownloaded,
@@ -41,6 +44,7 @@ func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logge
 			igc.Username,
 			igc.Password,
 			igc.Inbox,
+			igc.InboxPrefix,
 			igc.AllowInsecureSSL,
 			logger,
 		),
