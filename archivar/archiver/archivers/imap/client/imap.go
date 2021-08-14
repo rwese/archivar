@@ -263,7 +263,7 @@ func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool
 }
 
 func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message, deleteDownloaded bool) (err error) {
-	mbox, err := i.client.Select(inbox, false)
+	_, err = i.client.Select(inbox, false)
 	if err != nil {
 		i.ListInboxes()
 		return err
@@ -273,13 +273,14 @@ func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message
 
 	criteria := imap.NewSearchCriteria()
 	criteria.WithoutFlags = []string{imap.DeletedFlag}
+	criteria.WithoutFlags = append(criteria.WithoutFlags, imap.SeenFlag)
 
 	foundMsgs, err := i.client.Search(criteria)
 	if err != nil {
 		return err
 	}
 
-	if mbox.Messages == 0 {
+	if len(foundMsgs) == 0 {
 		i.logger.Debug("no messages")
 		return nil
 	}
