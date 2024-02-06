@@ -17,6 +17,10 @@ type ImapGathererConfig struct {
 	InboxPrefix      string
 	AllowInsecureSSL bool
 	DeleteDownloaded bool
+	TimestampFormat  string
+	PathPattern      string
+	FilePattern      string
+	MaxSubjectLength int64
 }
 
 type ImapGatherer struct {
@@ -35,6 +39,18 @@ func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logge
 		igc.Inbox = "Inbox"
 	}
 
+	if igc.TimestampFormat == "" {
+		igc.TimestampFormat = "20060102_150405"
+	}
+
+	if igc.PathPattern == "" {
+		igc.PathPattern = "{mail_dir}/{mail_to}/{mail_to_detail}/{mail_date}-{mail_subject_safe}"
+	}
+
+	if igc.FilePattern == "" {
+		igc.FilePattern = "{attachment_filename}"
+	}
+
 	return &ImapGatherer{
 		deleteDownloaded: igc.DeleteDownloaded,
 		storage:          storage,
@@ -46,6 +62,10 @@ func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logge
 			igc.Inbox,
 			igc.InboxPrefix,
 			igc.AllowInsecureSSL,
+			igc.TimestampFormat,
+			igc.PathPattern,
+			igc.FilePattern,
+			igc.MaxSubjectLength,
 			logger,
 		),
 	}
