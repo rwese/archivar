@@ -2,11 +2,11 @@ package client
 
 import (
 	"crypto/tls"
-	"fmt"
 	"io"
 	"log"
-	"path"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/emersion/go-imap"
@@ -26,13 +26,17 @@ type Imap struct {
 	inboxPrefix      string
 	processingInbox  string
 	allowInsecureSSL bool
+	timestampFormat  string
+	pathPattern      string
+	filePattern      string
+	maxSubjectLength int64
 	client           *client.Client
 	section          *imap.BodySectionName
 	items            []imap.FetchItem
 	logger           *logrus.Logger
 }
 
-func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL bool, logger *logrus.Logger) *Imap {
+func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL bool, timestampFormat string, pathPattern string, filePattern string, maxSubjectLength int64, logger *logrus.Logger) *Imap {
 	i := &Imap{
 		server:           server,
 		username:         username,
@@ -40,6 +44,10 @@ func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL
 		inbox:            inbox,
 		inboxPrefix:      inboxPrefix,
 		allowInsecureSSL: allowInsecureSSL,
+		timestampFormat:  timestampFormat,
+		pathPattern:      pathPattern,
+		filePattern:      filePattern,
+		maxSubjectLength: maxSubjectLength,
 		logger:           logger,
 	}
 
@@ -90,16 +98,18 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 		mailData.date = date
 	}
 	if from, err := header.AddressList("From"); err == nil {
-		mailData.from = *from[0]
+		mailData.from = NewParsedAddress(from[0])
 	}
 	if to, err := header.AddressList("To"); err == nil {
-		mailData.to = *to[0]
+		mailData.to = NewParsedAddress(to[0])
 	}
 	if subject, err := header.Subject(); err == nil {
+		if i.maxSubjectLength > 0 && int64(len(subject)) > i.maxSubjectLength {
+			subject = subject[:i.maxSubjectLength]
+		}
+
 		mailData.subject = subject
 	}
-
-	filePrefixPath := mailData.getFilePath(i.processingInbox, true, true)
 
 	if err != nil {
 		log.Fatal(err)
@@ -113,6 +123,7 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 			log.Fatal(err)
 		}
 
+		filePath := mailData.getFilePath(i.processingInbox, i.pathPattern, i.timestampFormat)
 		var filename string
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
@@ -128,7 +139,7 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 				continue
 			}
 
-			filename = mailData.subject + fileExt
+			filename = fileSafe.ReplaceAllString(mailData.subject, "") + fileExt
 
 		case *mail.AttachmentHeader:
 			filename, _ = h.Filename()
@@ -137,16 +148,18 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 			}
 
 			logrus.Debugf("Got attachment: %v", filename)
-			logrus.Debugf("Saving as: %v", filePrefixPath)
+			logrus.Debugf("Saving as: %v", filePath)
 
 		default:
 			continue
 		}
 
+		filename = mailData.getFileName(filename, i.filePattern, i.timestampFormat)
+
 		f := file.New(
 			file.WithContent(p.Body),
 			file.WithFilename(filename),
-			file.WithDirectory(filePrefixPath),
+			file.WithDirectory(filePath),
 			file.WithCreatedAt(mailData.date),
 		)
 
@@ -159,41 +172,108 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 
 type mailData struct {
 	date    time.Time
-	from    mail.Address
-	to      mail.Address
+	from    ParsedAddress
+	to      ParsedAddress
 	subject string
 }
 
-var emailPlusPart = regexp.MustCompile(`\+(.+?)\@`)
-var subjectCleanup = regexp.MustCompile(`[^a-zA-Z0-9\-_ ]+`)
+type namingPatternMapping struct {
+	Placeholder string
+	Value       string
+}
 
-const SUBJECT_LENGTH = 30
+type namingPattern struct {
+	mapping []namingPatternMapping
+}
 
-func (m mailData) getFilePath(inbox string, addPlusStringToPath, addInboxToPath bool) string {
-	// TODO add variant options
-	timestamp := fmt.Sprintf(
-		"%04d%02d%02d_%02d%02d%02d",
-		m.date.Year(),
-		m.date.Month(),
-		m.date.Day(),
-		m.date.Hour(),
-		m.date.Minute(),
-		m.date.Second(),
-	)
+type ParsedAddress struct {
+	Address *mail.Address
+	Full    string
+	User    string
+	Detail  string
+	Domain  string
+}
 
-	pathParts := []string{}
-	pathParts = append(pathParts, inbox)
-	pathParts = append(pathParts, m.to.Address)
-	if addPlusStringToPath {
-		foundPlusString := emailPlusPart.FindSubmatch([]byte(m.to.String()))
-		if len(foundPlusString) > 1 {
-			pathParts = append(pathParts, string(foundPlusString[1]))
-		}
+func NewParsedAddress(a *mail.Address) ParsedAddress {
+	at := strings.LastIndex(a.Address, "@")
+	domain := ""
+	if at > 0 {
+		domain = a.Address[at+1:]
 	}
 
-	pathParts = append(pathParts, subjectCleanup.ReplaceAllString(timestamp+"-"+m.subject, ""))
+	user := a.Address
+	detail := ""
+	mailToSubMatch := emailPlusPart.FindSubmatch([]byte(a.String()))
+	if len(mailToSubMatch) > 1 {
+		user = strings.ReplaceAll(a.Address, string(mailToSubMatch[0]), "@")
+		detail = string(mailToSubMatch[1])
+	} else if at > 0 {
+		user = a.Address[:at]
+	}
 
-	return path.Join(pathParts...)
+	user = strings.ReplaceAll(user, "@"+domain, "")
+
+	return ParsedAddress{
+		Address: a,
+		Full:    a.Address,
+		User:    user,
+		Detail:  detail,
+		Domain:  domain,
+	}
+}
+
+func (n *namingPattern) format(format string) string {
+	s := format
+	for _, p := range n.mapping {
+		search := "{" + p.Placeholder + "}"
+		s = strings.Replace(s, search, p.Value, -1)
+	}
+
+	return s
+}
+
+func (n *namingPattern) add(placeholder string, value string) {
+	n.mapping = append(n.mapping, namingPatternMapping{
+		Placeholder: placeholder,
+		Value:       value,
+	})
+}
+
+var emailPlusPart = regexp.MustCompile(`\+(.+?)\@`)
+var fileSafe = regexp.MustCompile(`[\\/:"*?<>|]+`)
+
+func (m mailData) getNamingPattern(dateFormat string) namingPattern {
+	patternList := namingPattern{}
+	patternList.add("mail_from", m.from.Full)
+	patternList.add("mail_from_user", m.from.User)
+	patternList.add("mail_from_detail", m.from.Detail)
+	patternList.add("mail_from_domain", m.from.Domain)
+	patternList.add("mail_to", m.to.Full)
+	patternList.add("mail_to_user", m.to.User)
+	patternList.add("mail_to_detail", m.to.Detail)
+	patternList.add("mail_to_domain", m.to.Domain)
+	patternList.add("mail_subject", m.subject)
+	patternList.add("mail_subject_safe", fileSafe.ReplaceAllString(m.subject, ""))
+	patternList.add("mail_date", m.date.Format(dateFormat))
+
+	return patternList
+}
+
+func (m mailData) getFilePath(inbox string, pathPattern string, timestampFormat string) string {
+	pattern := m.getNamingPattern(timestampFormat)
+	pattern.add("mail_dir", inbox)
+
+	p := pattern.format(pathPattern)
+	p = filepath.Clean(p)
+
+	return p
+}
+
+func (m mailData) getFileName(fileName string, fileNamePattern string, timestampFormat string) string {
+	pattern := m.getNamingPattern(timestampFormat)
+	pattern.add("attachment_filename", fileName)
+
+	return pattern.format(fileNamePattern)
 }
 
 func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {

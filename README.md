@@ -174,6 +174,34 @@ Gatherers:
       # AllowInsecureSSL: False
 ```
 
+#### Optional config options:
+
+| Config           | Description                                                                                                                                                                                                           | Default                                                               |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| TimestampFormat  | Go date style definition of timestamp which is used for generating paths and filenames. ([unoffical docs](https://gosamples.dev/date-time-format-cheatsheet/), [offical docs](https://pkg.go.dev/time#pkg-constants)) | 20060102_150405                                                       |
+| PathPattern      | definition of directory path where files are stored                                                                                                                                                                   | {mail_dir}/{mail_to}/{mail_to_detail}/{mail_date}-{mail_subject_safe} |
+| FilePattern      | definition of filename for the stored files                                                                                                                                                                           | {attachment_filename}                                                 |
+| MaxSubjectLength | Char limit for mail subject if used in file or path pattern                                                                                                                                                           | 0 (unlimited)                                                         |
+
+#### Available variables in file and path patterns
+
+| Variable            | Description                                                    | Example                                                    |
+|---------------------|----------------------------------------------------------------|------------------------------------------------------------|
+| mail_from           | Full "From" address                                            | From: example+test@example.com -> example+test@example.com | 
+| mail_from_user      | User part of "From" address                                    | From: example+test@example.com -> example                  |
+| mail_from_detail    | Detail part of "From" address                                  | From: example+test@example.com -> test                     |
+| mail_from_domain    | Domain part of "From" address                                  | From: example+test@example.com -> example.com              |
+| mail_to             | Full "To" address                                              | To: example+test@example.com -> example+test@example.com   |
+| mail_to_user        | User part of "To" address                                      | To: example+test@example.com -> example                    |
+| mail_to_detail      | Detail part of "To" address                                    | To: example+test@example.com -> test                       |
+| mail_to_domain      | Domain part of "To" address                                    | To: example+test@example.com -> example.com                |
+| mail_subject        | Mail subject (raw, cut at ``MaxSubjectLength``)                | Subject: "Re: Quote" -> "Re: Quote"                        |
+| mail_subject_safe   | Mail subject (safe for filenames, cut at ``MaxSubjectLength``) | Subject: "Re: Quote" -> "Re Quote" (without colon)         |
+| mail_date           | Mail date in format defined in ``TimestampFormat``             | TimestampFormat: "2006-01-02" -> "2024-10-13"              |
+| mail_dir            | Mail folder path                                               | InboxPrefix: "test" -> "test"                              |
+| attachment_filename | Filename of attachment                                         | Attachment-Filename "invoice.pdf" -> "invoice.pdf"         |
+
+
 ### WEBDAV
 
 ```yaml
