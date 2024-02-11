@@ -289,6 +289,11 @@ func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
 
 	return
 }
+
+func (i *Imap) MoveMessages(seqSet *imap.SeqSet, dest string) (err error) {
+	return i.client.Move(seqSet, dest)
+}
+
 func (i *Imap) getInboxesByPrefix(prefix string) []string {
 	i.Connect()
 	mailboxes := make(chan *imap.MailboxInfo, 10)
@@ -357,11 +362,13 @@ func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message
 
 	foundMsgs, err := i.client.Search(criteria)
 	if err != nil {
+		close(messageChan)
 		return err
 	}
 
 	if len(foundMsgs) == 0 {
 		i.logger.Debug("no messages")
+		close(messageChan)
 		return nil
 	}
 
