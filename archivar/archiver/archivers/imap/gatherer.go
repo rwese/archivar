@@ -22,6 +22,8 @@ type ImapGathererConfig struct {
 	PathPattern           string
 	FilePattern           string
 	MaxSubjectLength      int64
+	WithSeen              bool
+	WithDeleted           bool
 }
 
 type ImapGatherer struct {
@@ -69,6 +71,8 @@ func NewGatherer(c interface{}, storage archivers.Archiver, logger *logrus.Logge
 			igc.PathPattern,
 			igc.FilePattern,
 			igc.MaxSubjectLength,
+			igc.WithSeen,
+			igc.WithDeleted,
 			logger,
 		),
 	}
@@ -94,7 +98,7 @@ func (i ImapGatherer) Download() (err error) {
 		}
 	}()
 
-	if err = i.client.GetMessages(messages, i.deleteDownloaded); err != nil {
+	if err = i.client.GetMessages(messages); err != nil {
 		return
 	}
 

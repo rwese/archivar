@@ -30,13 +30,15 @@ type Imap struct {
 	pathPattern      string
 	filePattern      string
 	maxSubjectLength int64
+	withDeleted      bool
+	withSeen         bool
 	client           *client.Client
 	section          *imap.BodySectionName
 	items            []imap.FetchItem
 	logger           *logrus.Logger
 }
 
-func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL bool, timestampFormat string, pathPattern string, filePattern string, maxSubjectLength int64, logger *logrus.Logger) *Imap {
+func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL bool, timestampFormat string, pathPattern string, filePattern string, maxSubjectLength int64, withSeen bool, withDeleted bool, logger *logrus.Logger) *Imap {
 	i := &Imap{
 		server:           server,
 		username:         username,
@@ -48,6 +50,8 @@ func New(server, username, password, inbox, inboxPrefix string, allowInsecureSSL
 		pathPattern:      pathPattern,
 		filePattern:      filePattern,
 		maxSubjectLength: maxSubjectLength,
+		withSeen:         withSeen,
+		withDeleted:      withDeleted,
 		logger:           logger,
 	}
 
@@ -323,7 +327,7 @@ func (i *Imap) ListInboxes() {
 	}
 }
 
-func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool) (err error) {
+func (i *Imap) GetMessages(messageChan chan *imap.Message) (err error) {
 	i.Connect()
 
 	inboxes := []string{}
@@ -338,7 +342,7 @@ func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool
 	for _, inbox := range inboxes {
 		i.processingInbox = inbox
 
-		err := i.processInboxMessages(inbox, messageChan, deleteDownloaded)
+		err := i.processInboxMessages(inbox, messageChan)
 		if err != nil {
 			return nil
 		}
@@ -347,7 +351,7 @@ func (i *Imap) GetMessages(messageChan chan *imap.Message, deleteDownloaded bool
 	return nil
 }
 
-func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message, deleteDownloaded bool) (err error) {
+func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message) (err error) {
 	_, err = i.client.Select(inbox, false)
 	if err != nil {
 		i.ListInboxes()
@@ -357,8 +361,12 @@ func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message
 	i.logger.Debugf("selected '%s'", inbox)
 
 	criteria := imap.NewSearchCriteria()
-	criteria.WithoutFlags = []string{imap.DeletedFlag}
-	criteria.WithoutFlags = append(criteria.WithoutFlags, imap.SeenFlag)
+	if i.withSeen == false {
+		criteria.WithoutFlags = append(criteria.WithoutFlags, imap.SeenFlag)
+	}
+	if i.withDeleted == false {
+		criteria.WithoutFlags = append(criteria.WithoutFlags, imap.DeletedFlag)
+	}
 
 	foundMsgs, err := i.client.Search(criteria)
 	if err != nil {
