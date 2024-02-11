@@ -126,7 +126,7 @@ func (i ImapGatherer) Download() (err error) {
 
 	err = i.client.Disconnect()
 	if err != nil {
-		i.logger.Debug("Failed to disconnect IMAP %s", err.Error())
+		i.logger.Debugf("Failed to disconnect IMAP %s", err.Error())
 	}
 
 	i.logger.Debug("processing imap storage done!")
