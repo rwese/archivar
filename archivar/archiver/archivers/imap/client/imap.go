@@ -1,7 +1,9 @@
 package client
 
 import (
+	"bytes"
 	"crypto/tls"
+	id "github.com/emersion/go-imap-id"
 	"io"
 	"log"
 	"path/filepath"
@@ -77,6 +79,15 @@ func (i *Imap) Connect() (err error) {
 		i.logger.Fatalf("failed to connect to imap: %s", err.Error())
 	}
 
+	// set id information
+	idClient := id.NewClient(i.client)
+	_, err = idClient.ID(
+		id.ID{id.FieldName: "IMAPClient", id.FieldVersion: "1.2.0"}, // just define it casually and declare your identity
+	)
+	if err != nil {
+		i.logger.Warnf("failed to set client ID information, %s", err.Error())
+	}
+
 	i.logger.Debugf("authenticate as %s using password %t", i.username, i.password != "")
 	if err = i.client.Login(i.username, i.password); err != nil {
 		i.logger.Fatalf("failed to login to imap: %s", err.Error())
@@ -91,7 +102,16 @@ func (i *Imap) Disconnect() (err error) {
 func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) error {
 	r := msg.GetBody(i.section)
 
-	m, err := mail.CreateReader(r)
+	var buf bytes.Buffer
+	_, err := io.Copy(&buf, r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	readerFirst := bytes.NewReader(buf.Bytes())
+	readerSecond := bytes.NewReader(buf.Bytes())
+
+	m, err := mail.CreateReader(readerFirst)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -162,7 +182,7 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 
 		f := file.New(
 			file.WithContent(p.Body),
-			file.WithFilename(filename),
+			file.WithFilename(fileSafe.ReplaceAllString(filename, "")),
 			file.WithDirectory(filePath),
 			file.WithCreatedAt(mailData.date),
 		)
@@ -171,6 +191,20 @@ func (i Imap) ProcessMessage(msg *imap.Message, upload archivers.UploadFunc) err
 			return err
 		}
 	}
+
+	// save eml file
+	emlFileName := fileSafe.ReplaceAllString(mailData.subject, "") + ".eml"
+	emlFilePath := mailData.getFilePath(i.processingInbox, i.pathPattern, i.timestampFormat)
+	emlFile := file.New(
+		file.WithContent(readerSecond),
+		file.WithFilename(fileSafe.ReplaceAllString(emlFileName, "")),
+		file.WithDirectory(emlFilePath),
+		file.WithCreatedAt(mailData.date),
+	)
+	if err = upload(emlFile); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -344,6 +378,7 @@ func (i *Imap) GetMessages(messageChan chan *imap.Message) (err error) {
 
 		err := i.processInboxMessages(inbox, messageChan)
 		if err != nil {
+			i.logger.Warnf("failed to process inbox message %v", err)
 			return nil
 		}
 	}
@@ -355,6 +390,7 @@ func (i *Imap) processInboxMessages(inbox string, messageChan chan *imap.Message
 	_, err = i.client.Select(inbox, false)
 	if err != nil {
 		i.ListInboxes()
+		close(messageChan)
 		return err
 	}
 
