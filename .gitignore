@@ -5,3 +5,4 @@ etc
 cmd/archivar/__debug_bin
 heap.tar.gz
 tmp*/
+.idea
