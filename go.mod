@@ -1,7 +1,7 @@
 module github.com/rwese/archivar
 
-go 1.22.0
-toolchain go1.23.7
+go 1.24.0
+toolchain go1.24.1
 
 require (
 	github.com/Eun/gdriver v0.0.0-20230613142936-5ce02438cd0d
