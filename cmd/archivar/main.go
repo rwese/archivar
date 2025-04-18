@@ -12,11 +12,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	DEFAULT_PROFILER_PORT = 6060
+	DEFAULT_CONFIG_FILE   = "archivar.yaml"
+)
+
 var (
 	logger = log.New()
 )
-
-const DEFAULT_PROFILER_PORT = 6060
 
 var rootCmd = &cobra.Command{
 	Use: "app",
@@ -26,7 +29,7 @@ var dumpCmd = &cobra.Command{
 	Use:   "dump",
 	Short: "Dump existing modules and configuration details",
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := setupArchivarSvc(cmd, args)
+		svc := setupArchivarSvc(cmd)
 		fmt.Println("Dumping configured modules")
 		svc.Dump()
 	},
@@ -40,57 +43,71 @@ and running the archivers until receiving an interrupt signal.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		defaultJobInterval, _ := cmd.Flags().GetInt("interval")
 		logger.Debugf("running watch with default interval: %d", defaultJobInterval)
-		svc := setupArchivarSvc(cmd, args)
+		svc := setupArchivarSvc(cmd)
 		svc.RunJobs()
 	},
 }
 
 func main() {
 	cobra.OnInitialize()
-	err := rootCmd.Execute()
-	if err != nil {
-		panic(err)
+	if err := rootCmd.Execute(); err != nil {
+		logger.Fatalf("Error executing command: %v", err)
 	}
 }
 
 func init() {
-	cmdWatch.Flags().IntP("interval", "i", 60, "default wait time between processing of all configured archivers, can be overriden by specifying it per job")
+	cmdWatch.Flags().IntP("interval", "i", 60, "Default wait time between processing of all configured archivers, can be overridden per job")
 
-	rootCmd.PersistentFlags().StringP("config", "c", "archivar.yaml", "Configfile")
-	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable verbose logging output")
-	rootCmd.PersistentFlags().Bool("trace", false, "enable tracing in log output")
-	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "suppress all non-error output")
-	rootCmd.PersistentFlags().Bool("profiler", false, "run go profiler server")
-	rootCmd.PersistentFlags().Int("profilerPort", DEFAULT_PROFILER_PORT, "run go profiler server")
+	rootCmd.PersistentFlags().StringP("config", "c", DEFAULT_CONFIG_FILE, "Path to the configuration file")
+	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable verbose logging output")
+	rootCmd.PersistentFlags().Bool("trace", false, "Enable tracing in log output")
+	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Suppress all non-error output")
+	rootCmd.PersistentFlags().Bool("profiler", false, "Run Go profiler server")
+	rootCmd.PersistentFlags().Int("profilerPort", DEFAULT_PROFILER_PORT, "Port for the Go profiler server")
 	rootCmd.AddCommand(cmdWatch)
 	rootCmd.AddCommand(dumpCmd)
 	rootCmd.AddCommand(encrypter.CmdEncrypter)
 }
 
-func setupArchivarSvc(cmd *cobra.Command, args []string) archivar.Archivar {
+func setupArchivarSvc(cmd *cobra.Command) archivar.Archivar {
 	configFile, _ := cmd.Flags().GetString("config")
 	viper.SetConfigName(configFile)
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %s", err))
+	if err := viper.ReadInConfig(); err != nil {
+		logger.Fatalf("Error reading config file: %v", err)
 	}
 
 	var serviceConfig archivar.Config
-	err = viper.Unmarshal(&serviceConfig)
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %s", err))
+	if err := viper.Unmarshal(&serviceConfig); err != nil {
+		logger.Fatalf("Error unmarshalling config file: %v", err)
 	}
 
+	configureLogging(cmd, serviceConfig)
+
+	if profiler, _ := cmd.Flags().GetBool("profiler"); profiler {
+		profilerPort, _ := cmd.Flags().GetInt("profilerPort")
+		go startProfiler(profilerPort)
+	}
+
+	return archivar.New(serviceConfig, logger)
+}
+
+func configureLogging(cmd *cobra.Command, serviceConfig archivar.Config) {
 	debugging, _ := cmd.Flags().GetBool("debug")
 	trace, _ := cmd.Flags().GetBool("trace")
+	quiet, _ := cmd.Flags().GetBool("quiet")
+
+	if quiet {
+		logger.SetLevel(log.ErrorLevel)
+		return
+	}
+
 	if debugging || serviceConfig.Settings.Log.Debugging {
 		logger.SetLevel(log.DebugLevel)
 		if trace {
 			logger.SetReportCaller(true)
 		}
-
 		logger.SetFormatter(&log.JSONFormatter{
 			FieldMap: log.FieldMap{
 				log.FieldKeyTime:  "@timestamp",
@@ -100,21 +117,12 @@ func setupArchivarSvc(cmd *cobra.Command, args []string) archivar.Archivar {
 			},
 		})
 	}
+}
 
-	quiet, _ := cmd.Flags().GetBool("quiet")
-	if quiet {
-		logger.SetLevel(log.ErrorLevel)
+func startProfiler(port int) {
+	listenHostPort := fmt.Sprintf("0.0.0.0:%d", port)
+	logger.Warnf("Starting profiler on %s", listenHostPort)
+	if err := http.ListenAndServe(listenHostPort, nil); err != nil {
+		logger.Errorf("Profiler server error: %v", err)
 	}
-
-	profiler, _ := cmd.Flags().GetBool("profiler")
-	profilerPort, _ := cmd.Flags().GetInt("profilerPort")
-	if profiler {
-		go func() {
-			listenHostPort := "0.0.0.0:" + fmt.Sprintf("%d", profilerPort)
-			logger.Warnln("Run profiler", listenHostPort)
-			logger.Warnln(http.ListenAndServe(listenHostPort, nil))
-		}()
-	}
-
-	return archivar.New(serviceConfig, logger)
 }
