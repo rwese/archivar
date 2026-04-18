@@ -4,6 +4,10 @@ on:
     tags:
       - "**"
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-publish-release-tags:
     runs-on: [ubuntu-latest]
@@ -16,7 +20,7 @@ jobs:
           input_string: ${{ github.ref }}
           version_extractor_regex: '\/v(.*)$'
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
 
